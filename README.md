@@ -1,18 +1,11 @@
 <h1>quadruped-rl</h1>
 <h2>Goal</h2>
 <p>
-In this project a quadruped robot is learning to walk in sim.Furthermore, the training performance, <br>
-learned generalized behavior and how it differs based on changes in the parameters will be analyzed.
+The goal of this proejct is to build a quadruped robot for a simulated environment and training it to walk by using reinforcement learning.
+In the process i will log my progress and various training metrics for an analysis of the training and the end-result.
 </p>
-<h2>Setup</h2>
+<h2>The Robot</h2>
 <p>
-The Robot is a 12 DOF quadruped robot structured similiar to anthropods. The chosen simulation engine is Mujoco for <br>
-its many uses in similar projects and great physics simulation capabilities. For better general behavior the terrain, <br>
-friction, inertias and other parameters will be randomized through training as well as noise injection in the sensor data <br>
-for a sim to real deployment possibility. For the reinforcement learning part Mujoco is wrapped in a gym environment which <br>
-interacts with an MLP through sb3's PPO implementation.
+The Robot is a 12 DOF quadruped robot which is structured similiar to spiders. For the simulation environment MuJoCo will be used due to it being used for similar locomotion
+simulation and its easier handling compared to other ones. To simulate the robot we first need a digital version of it as Mujoco works with mjcf files which are written in xml.
 </p>
-<h2>The Simulated Robot</h2>
-<p>
-To create an easy adjustable robot in the mjcf format for Mujoco a generation script is more optimal than a direct model <br>
-due to its size and need adjust multiple repetitive parts each by hand.</p>

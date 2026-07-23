@@ -1,0 +1,9 @@
+<mujoco model="robot">
+    <compiler angle="radian"/>
+    <option timestep="0.002" gravity="0 0 -9.81"/>
+    <worldbody>
+        <geom name="floor" type="plane" size="1 1 0.1" friction="0.8 0.005 0.0001"/>
+        <body name="base" pos="0 0 0.3"/>
+            <geom name="base_geom" type="capsule" fromto="0 0 0 0 0 0.0001" size="0.05" mass="0.5"/>
+    </worldbody>
+</mujoco>
