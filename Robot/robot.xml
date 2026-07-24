@@ -3,7 +3,25 @@
     <option timestep="0.002" gravity="0 0 -9.81"/>
     <worldbody>
         <geom name="floor" type="plane" size="1 1 0.1" friction="0.8 0.005 0.0001"/>
-        <body name="base" pos="0 0 0.3"/>
-            <geom name="base_geom" type="capsule" fromto="0 0 0 0 0 0.0001" size="0.05" mass="0.5"/>
+        <body name="base" pos="0 0 0.5">
+            <freejoint/>
+            <geom name="base_geom" type="box" size="0.1 0.1 0.020" mass="0.3"/>
+            <body name="upper_leg_1">
+                <joint name="hip1" type="hinge" axis="0 0 1" range="-1.0472 1.0472 " pos="0.04 0.04 -0.045"/>
+                <geom name="upper_leg_1_geom" type="capsule" fromto="0.04 0.04 -0.045 0.125 0.125 -0.045" size="0.015" mass="0.02"/>
+            </body>
+            <body name="upper_leg_2">
+                <joint name="hip2" type="hinge" axis="0 0 1" range="-1.0472 1.0472 " pos="0.04 -0.04 -0.045"/>
+                <geom name="upper_leg_2_geom" type="capsule" fromto="0.04 -0.04 -0.045 0.125 -0.125 -0.045" size="0.015" mass="0.02"/>
+            </body>
+            <body name="upper_leg_3">
+                <joint name="hip3" type="hinge" axis="0 0 1" range="-1.0472 1.0472 " pos="-0.04 -0.04 -0.045"/>
+                <geom name="upper_leg_3_geom" type="capsule" fromto="-0.04 -0.04 -0.045 -0.125 -0.125 -0.045" size="0.015" mass="0.02"/>
+            </body>
+            <body name="upper_leg_4">
+                <joint name="hip4" type="hinge" axis="0 0 1" range="-1.0472 1.0472 " pos="-0.04 0.04 -0.045"/>
+                <geom name="upper_leg_4_geom" type="capsule" fromto="-0.04 0.04 -0.045 -0.125 0.125 -0.045" size="0.015" mass="0.02"/>
+            </body>
+        </body>
     </worldbody>
 </mujoco>
