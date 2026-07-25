@@ -6,54 +6,122 @@
         <body name="base" pos="0 0 0.5">
             <freejoint/>
             <geom name="base_geom" type="box" size="0.1 0.1 0.020" mass="0.3"/>
+            <site name="imu_site" pos="0 0 0" size="0.005"/>
             <body name="upper_leg_1" pos="0.04 0.04 -0.045" euler = "0 0 -0.7854">
-                <joint name="hip1" type="hinge" axis="0 0 1" range="-1.0472 1.0472 "/>
+                <joint name="hip_1" type="hinge" axis="0 0 1" range="-1.0472 1.0472 "/>
                 <geom name="upper_leg_1_geom" type="capsule" fromto="0 0 0 0 0.125 0" size="0.015" mass="0.02"/>
                 <body name="lower_leg_1" pos="0 0.125 0">
-                    <joint name="knee1" type="hinge" axis="1 0 0" range="-1.5 1.5 "/>
+                    <joint name="knee_1" type="hinge" axis="1 0 0" range="-1.5 1.5 "/>
                     <geom name="lower_leg_1_geom" type="capsule" fromto="0 0 0 0 0.15 0" size="0.015" mass="0.02"/>
                     <body name="foot_1" pos="0 0.15 0">
-                        <joint name="ankle1" type="hinge" axis="1 0 0" range="-2.618 0 "/>
+                        <joint name="ankle_1" type="hinge" axis="1 0 0" range="-2.618 0 "/>
                         <geom name="foot_1_geom" type="capsule" fromto="0 0 0 0 0.2 0" size="0.015" mass="0.02"/>
+                        <site name="foot_1_site" pos="0 0.2 0" size="0.01"/>
                     </body>
                 </body>
             </body>
             <body name="upper_leg_2" pos="0.04 -0.04 -0.045" euler = "0 0 -2.3562">
-                <joint name="hip2" type="hinge" axis="0 0 1" range="-1.0472 1.0472"/>
+                <joint name="hip_2" type="hinge" axis="0 0 1" range="-1.0472 1.0472"/>
                 <geom name="upper_leg_2_geom" type="capsule" fromto="0 0 0 0 0.125 0" size="0.015" mass="0.02"/>
                 <body name="lower_leg_2" pos="0 0.125 0">
-                    <joint name="knee2" type="hinge" axis="1 0 0" range="-1.5 1.5 "/>
+                    <joint name="knee_2" type="hinge" axis="1 0 0" range="-1.5 1.5 "/>
                     <geom name="lower_leg_2_geom" type="capsule" fromto="0 0 0 0 0.15 0" size="0.015" mass="0.02"/>
                     <body name="foot_2" pos="0 0.15 0">
-                        <joint name="ankle2" type="hinge" axis="1 0 0" range="-2.618 0 "/>
+                        <joint name="ankle_2" type="hinge" axis="1 0 0" range="-2.618 0 "/>
                         <geom name="foot_2_geom" type="capsule" fromto="0 0 0 0 0.2 0" size="0.015" mass="0.02"/>
+                        <site name="foot_2_site" pos="0 0.2 0" size="0.01"/>
                     </body>
                 </body>
             </body>
             <body name="upper_leg_3" pos="-0.04 -0.04 -0.045" euler = "0 0 2.3562">
-                <joint name="hip3" type="hinge" axis="0 0 1" range="-1.0472 1.0472"/>
+                <joint name="hip_3" type="hinge" axis="0 0 1" range="-1.0472 1.0472"/>
                 <geom name="upper_leg_3_geom" type="capsule" fromto="0 0 0 0 0.125 0" size="0.015" mass="0.02"/>
                 <body name="lower_leg_3" pos="0 0.125 0">
-                    <joint name="knee3" type="hinge" axis="1 0 0" range="-1.5 1.5 "/>
+                    <joint name="knee_3" type="hinge" axis="1 0 0" range="-1.5 1.5 "/>
                     <geom name="lower_leg_3_geom" type="capsule" fromto="0 0 0 0 0.15 0" size="0.015" mass="0.02"/>
                     <body name="foot_3" pos="0 0.15 0">
-                        <joint name="ankle3" type="hinge" axis="1 0 0" range="-2.618 0 "/>
+                        <joint name="ankle_3" type="hinge" axis="1 0 0" range="-2.618 0 "/>
                         <geom name="foot_3_geom" type="capsule" fromto="0 0 0 0 0.2 0" size="0.015" mass="0.02"/>
+                        <site name="foot_3_site" pos="0 0.2 0" size="0.01"/>
                     </body>
                 </body>
             </body>
             <body name="upper_leg_4" pos="-0.04 0.04 -0.045" euler = "0 0 0.7854">
-                <joint name="hip4" type="hinge" axis="0 0 1" range="-1.0472 1.0472"/>
+                <joint name="hip_4" type="hinge" axis="0 0 1" range="-1.0472 1.0472"/>
                 <geom name="upper_leg_4_geom" type="capsule" fromto="0 0 0 0 0.125 0" size="0.015" mass="0.02"/>
                 <body name="lower_leg_4" pos="0 0.125 0">
-                    <joint name="knee4" type="hinge" axis="1 0 0" range="-1.5 1.5 "/>
+                    <joint name="knee_4" type="hinge" axis="1 0 0" range="-1.5 1.5 "/>
                     <geom name="lower_leg_4_geom" type="capsule" fromto="0 0 0 0 0.15 0" size="0.015" mass="0.02"/>
                     <body name="foot_4" pos="0 0.15 0">
-                        <joint name="ankle4" type="hinge" axis="1 0 0" range="-2.618 0 "/>
+                        <joint name="ankle_4" type="hinge" axis="1 0 0" range="-2.618 0 "/>
                         <geom name="foot_4_geom" type="capsule" fromto="0 0 0 0 0.2 0" size="0.015" mass="0.02"/>
+                        <site name="foot_4_site" pos="0 0.2 0" size="0.01"/>
                     </body>
                 </body>
             </body>
         </body>
     </worldbody>
+    <actuator>
+        <position name="hip_1_servo"  joint="hip_1" kp="40" kv="1"/>
+        <position name="knee_1_servo"  joint="knee_1" kp="40" kv="1"/>
+        <position name="ankle_1_servo"  joint="ankle_1" kp="40" kv="1"/>
+        <position name="hip_2_servo"  joint="hip_2" kp="40" kv="1"/>
+        <position name="knee_2_servo"  joint="knee_2" kp="40" kv="1"/>
+        <position name="ankle_2_servo"  joint="ankle_2" kp="40" kv="1"/>
+        <position name="hip_3_servo"  joint="hip_3" kp="40" kv="1"/>
+        <position name="knee_3_servo"  joint="knee_3" kp="40" kv="1"/>
+        <position name="ankle_3_servo"  joint="ankle_3" kp="40" kv="1"/>
+        <position name="hip_4_servo"  joint="hip_4" kp="40" kv="1"/>
+        <position name="knee_4_servo"  joint="knee_4" kp="40" kv="1"/>
+        <position name="ankle_4_servo"  joint="ankle_4" kp="40" kv="1"/>
+    </actuator>
+    <sensor>
+        <jointpos name="hip_1_pos" joint="hip_1"/>
+        <jointvel name="hip_1_vel" joint="hip_1"/>
+        <actuatorfrc name="hip_1_load" actuator="hip_1_servo"/>
+        <jointpos name="knee_1_pos" joint="knee_1"/>
+        <jointvel name="knee_1_vel" joint="knee_1"/>
+        <actuatorfrc name="knee_1_load" actuator="knee_1_servo"/>
+        <jointpos name="ankle_1_pos" joint="ankle_1"/>
+        <jointvel name="ankle_1_vel" joint="ankle_1"/>
+        <actuatorfrc name="ankle_1_load" actuator="ankle_1_servo"/>
+
+        <jointpos name="hip_2_pos" joint="hip_2"/>
+        <jointvel name="hip_2_vel" joint="hip_2"/>
+        <actuatorfrc name="hip_2_load" actuator="hip_2_servo"/>
+        <jointpos name="knee_2_pos" joint="knee_2"/>
+        <jointvel name="knee_2_vel" joint="knee_2"/>
+        <actuatorfrc name="knee_2_load" actuator="knee_2_servo"/>
+        <jointpos name="ankle_2_pos" joint="ankle_2"/>
+        <jointvel name="ankle_2_vel" joint="ankle_2"/>
+        <actuatorfrc name="ankle_2_load" actuator="ankle_2_servo"/>
+
+        <jointpos name="hip_3_pos" joint="hip_3"/>
+        <jointvel name="hip_3_vel" joint="hip_3"/>
+        <actuatorfrc name="hip_3_load" actuator="hip_3_servo"/>
+        <jointpos name="knee_3_pos" joint="knee_3"/>
+        <jointvel name="knee_3_vel" joint="knee_3"/>
+        <actuatorfrc name="knee_3_load" actuator="knee_3_servo"/>
+        <jointpos name="ankle_3_pos" joint="ankle_3"/>
+        <jointvel name="ankle_3_vel" joint="ankle_3"/>
+        <actuatorfrc name="ankle_3_load" actuator="ankle_3_servo"/>
+
+        <jointpos name="hip_4_pos" joint="hip_4"/>
+        <jointvel name="hip_4_vel" joint="hip_4"/>
+        <actuatorfrc name="hip_4_load" actuator="hip_4_servo"/>
+        <jointpos name="knee_4_pos" joint="knee_4"/>
+        <jointvel name="knee_4_vel" joint="knee_4"/>
+        <actuatorfrc name="knee_4_load" actuator="knee_4_servo"/>
+        <jointpos name="ankle_4_pos" joint="ankle_4"/>
+        <jointvel name="ankle_4_vel" joint="ankle_4"/>
+        <actuatorfrc name="ankle_4_load" actuator="ankle_4_servo"/>
+
+        <accelerometer name="imu_acc" site="imu_site"/>
+        <gyro name="imu_gyro" site="imu_site"/>
+
+        <touch name="foot_1_touch" site="foot_1_site"/>
+        <touch name="foot_2_touch" site="foot_2_site"/>
+        <touch name="foot_3_touch" site="foot_3_site"/>
+        <touch name="foot_4_touch" site="foot_4_site"/>
+    </sensor>
 </mujoco>
