@@ -1,123 +1,135 @@
 <mujoco model="robot">
     <compiler angle="radian"/>
-    <option timestep="0.002" gravity="0 0 -9.81"/>
+    <option timestep="0.002" gravity="0 0 -9.81" integrator="implicitfast"/>
+    <default>
+        <joint damping="0.05" armature="0.008"/>
+        <geom friction="0.8 0.005 0.0001" condim="3"/>
+    </default>
     <worldbody>
-        <geom name="floor" type="plane" size="1 1 0.1" friction="0.8 0.005 0.0001"/>
+        <geom name="floor" type="plane" size="0 0 0.05" friction="0.8 0.005 0.0001"/>
         <body name="base" pos="0 0 0.5">
             <freejoint/>
-            <geom name="base_geom" type="box" size="0.1 0.1 0.020" mass="0.3"/>
+            <geom name="base_geom" type="box" size="0.08 0.08 0.020" mass="0.55"/>
             <site name="imu_site" pos="0 0 0" size="0.005"/>
             <body name="upper_leg_1" pos="0.04 0.04 -0.045" euler = "0 0 -0.7854">
-                <joint name="hip_1" type="hinge" axis="0 0 1" range="-1.0472 1.0472 "/>
-                <geom name="upper_leg_1_geom" type="capsule" fromto="0 0 0 0 0.125 0" size="0.015" mass="0.02"/>
-                <body name="lower_leg_1" pos="0 0.125 0">
+                <joint name="hip_1" type="hinge" axis="0 0 1" range="-0.698 0.698"/>
+                <geom type="box" size="0.02 0.01 0.02" mass="0.06" contype="0" conaffinity="0"/>
+                <geom name="upper_leg_1_geom" type="capsule" fromto="0 0 0 0 0.075 0" size="0.015" density="1250"/>
+                <body name="lower_leg_1" pos="0 0.075 0">
                     <joint name="knee_1" type="hinge" axis="1 0 0" range="-1.5 1.5 "/>
-                    <geom name="lower_leg_1_geom" type="capsule" fromto="0 0 0 0 0.15 0" size="0.015" mass="0.02"/>
-                    <body name="foot_1" pos="0 0.15 0">
-                        <joint name="ankle_1" type="hinge" axis="1 0 0" range="-2.618 0 "/>
-                        <geom name="foot_1_geom" type="capsule" fromto="0 0 0 0 0.2 0" size="0.015" mass="0.02"/>
-                        <site name="foot_1_site" pos="0 0.2 0" size="0.01"/>
+                    <geom name="lower_leg_1_geom" type="capsule" fromto="0 0 0 0 0.095 0" size="0.015" density="1250"/>
+                    <geom type="box" size="0.02 0.01 0.02" mass="0.06" contype="0" conaffinity="0"/>
+                    <body name="foot_1" pos="0 0.095 0" euler = "-1.309 0 0">
+                        <joint name="ankle_1" type="hinge" axis="1 0 0" range="-0.85 0.85"/>
+                        <geom name="foot_1_geom" type="capsule" fromto="0 0 0 0 0.125 0" size="0.015" density="1250"/>
+                        <geom type="box" size="0.02 0.01 0.02" mass="0.06" contype="0" conaffinity="0"/>
+                        <geom name="pad1" type="sphere" size="0.016" pos="0 0.125 0" mass="0.005"
+                            friction="1.0 0.01 0.0001" condim="3"/>
+                        <site name="foot_1_site" pos="0 0.125 0" size="0.016"/>
                     </body>
                 </body>
             </body>
             <body name="upper_leg_2" pos="0.04 -0.04 -0.045" euler = "0 0 -2.3562">
-                <joint name="hip_2" type="hinge" axis="0 0 1" range="-1.0472 1.0472"/>
-                <geom name="upper_leg_2_geom" type="capsule" fromto="0 0 0 0 0.125 0" size="0.015" mass="0.02"/>
-                <body name="lower_leg_2" pos="0 0.125 0">
+                <joint name="hip_2" type="hinge" axis="0 0 1" range="-0.698 0.698"/>
+                <geom name="upper_leg_2_geom" type="capsule" fromto="0 0 0 0 0.075 0" size="0.015" density="1250"/>
+                <geom type="box" size="0.02 0.01 0.02" mass="0.06" contype="0" conaffinity="0"/>
+                <body name="lower_leg_2" pos="0 0.075 0">
                     <joint name="knee_2" type="hinge" axis="1 0 0" range="-1.5 1.5 "/>
-                    <geom name="lower_leg_2_geom" type="capsule" fromto="0 0 0 0 0.15 0" size="0.015" mass="0.02"/>
-                    <body name="foot_2" pos="0 0.15 0">
-                        <joint name="ankle_2" type="hinge" axis="1 0 0" range="-2.618 0 "/>
-                        <geom name="foot_2_geom" type="capsule" fromto="0 0 0 0 0.2 0" size="0.015" mass="0.02"/>
-                        <site name="foot_2_site" pos="0 0.2 0" size="0.01"/>
+                    <geom name="lower_leg_2_geom" type="capsule" fromto="0 0 0 0 0.095 0" size="0.015" density="1250"/>
+                    <geom type="box" size="0.02 0.01 0.02" mass="0.06" contype="0" conaffinity="0"/>
+                    <body name="foot_2" pos="0 0.095 0" euler = "-1.309 0 0">
+                        <joint name="ankle_2" type="hinge" axis="1 0 0" range="-0.85 0.85"/>
+                        <geom name="foot_2_geom" type="capsule" fromto="0 0 0 0 0.125 0" size="0.015" density="1250"/>
+                        <geom type="box" size="0.02 0.01 0.02" mass="0.06" contype="0" conaffinity="0"/>
+                        <geom name="pad2" type="sphere" size="0.016" pos="0 0.125 0" mass="0.005"
+                            friction="1.0 0.01 0.0001" condim="3"/>
+                        <site name="foot_2_site" pos="0 0.125 0" size="0.016"/>
                     </body>
                 </body>
             </body>
             <body name="upper_leg_3" pos="-0.04 -0.04 -0.045" euler = "0 0 2.3562">
-                <joint name="hip_3" type="hinge" axis="0 0 1" range="-1.0472 1.0472"/>
-                <geom name="upper_leg_3_geom" type="capsule" fromto="0 0 0 0 0.125 0" size="0.015" mass="0.02"/>
-                <body name="lower_leg_3" pos="0 0.125 0">
+                <joint name="hip_3" type="hinge" axis="0 0 1" range="-0.698 0.698"/>
+                <geom name="upper_leg_3_geom" type="capsule" fromto="0 0 0 0 0.075 0" size="0.015" density="1250"/>
+                <geom type="box" size="0.02 0.01 0.02" mass="0.06" contype="0" conaffinity="0"/>
+                <body name="lower_leg_3" pos="0 0.075 0">
                     <joint name="knee_3" type="hinge" axis="1 0 0" range="-1.5 1.5 "/>
-                    <geom name="lower_leg_3_geom" type="capsule" fromto="0 0 0 0 0.15 0" size="0.015" mass="0.02"/>
-                    <body name="foot_3" pos="0 0.15 0">
-                        <joint name="ankle_3" type="hinge" axis="1 0 0" range="-2.618 0 "/>
-                        <geom name="foot_3_geom" type="capsule" fromto="0 0 0 0 0.2 0" size="0.015" mass="0.02"/>
-                        <site name="foot_3_site" pos="0 0.2 0" size="0.01"/>
+                    <geom name="lower_leg_3_geom" type="capsule" fromto="0 0 0 0 0.095 0" size="0.015" density="1250"/>
+                    <geom type="box" size="0.02 0.01 0.02" mass="0.06" contype="0" conaffinity="0"/>
+                    <body name="foot_3" pos="0 0.095 0" euler = "-1.309 0 0">
+                        <joint name="ankle_3" type="hinge" axis="1 0 0" range="-0.85 0.85"/>
+                        <geom name="foot_3_geom" type="capsule" fromto="0 0 0 0 0.125 0" size="0.015" density="1250"/>
+                        <geom type="box" size="0.02 0.01 0.02" mass="0.06" contype="0" conaffinity="0"/>
+                        <geom name="pad3" type="sphere" size="0.016" pos="0 0.125 0" mass="0.005"
+                            friction="1.0 0.01 0.0001" condim="3"/>
+                        <site name="foot_3_site" pos="0 0.125 0" size="0.016"/>
                     </body>
                 </body>
             </body>
             <body name="upper_leg_4" pos="-0.04 0.04 -0.045" euler = "0 0 0.7854">
-                <joint name="hip_4" type="hinge" axis="0 0 1" range="-1.0472 1.0472"/>
-                <geom name="upper_leg_4_geom" type="capsule" fromto="0 0 0 0 0.125 0" size="0.015" mass="0.02"/>
-                <body name="lower_leg_4" pos="0 0.125 0">
+                <joint name="hip_4" type="hinge" axis="0 0 1" range="-0.698 0.698"/>
+                <geom name="upper_leg_4_geom" type="capsule" fromto="0 0 0 0 0.075 0" size="0.015" density="1250"/>
+                <geom type="box" size="0.02 0.01 0.02" mass="0.06" contype="0" conaffinity="0"/>
+                <body name="lower_leg_4" pos="0 0.075 0">
                     <joint name="knee_4" type="hinge" axis="1 0 0" range="-1.5 1.5 "/>
-                    <geom name="lower_leg_4_geom" type="capsule" fromto="0 0 0 0 0.15 0" size="0.015" mass="0.02"/>
-                    <body name="foot_4" pos="0 0.15 0">
-                        <joint name="ankle_4" type="hinge" axis="1 0 0" range="-2.618 0 "/>
-                        <geom name="foot_4_geom" type="capsule" fromto="0 0 0 0 0.2 0" size="0.015" mass="0.02"/>
-                        <site name="foot_4_site" pos="0 0.2 0" size="0.01"/>
+                    <geom name="lower_leg_4_geom" type="capsule" fromto="0 0 0 0 0.095 0" size="0.015" density="1250"/>
+                    <geom type="box" size="0.02 0.01 0.02" mass="0.06" contype="0" conaffinity="0"/>
+                    <body name="foot_4" pos="0 0.095 0" euler = "-1.309 0 0">
+                        <joint name="ankle_4" type="hinge" axis="1 0 0" range="-0.85 0.85"/>
+                        <geom name="foot_4_geom" type="capsule" fromto="0 0 0 0 0.125 0" size="0.015" density="1250"/>
+                        <geom type="box" size="0.02 0.01 0.02" mass="0.06" contype="0" conaffinity="0"/>
+                        <geom name="pad4" type="sphere" size="0.016" pos="0 0.125 0" mass="0.005"
+                            friction="1.0 0.01 0.0001" condim="3"/>
+                        <site name="foot_4_site" pos="0 0.125 0" size="0.016"/>
                     </body>
                 </body>
             </body>
         </body>
     </worldbody>
     <actuator>
-        <position name="hip_1_servo"  joint="hip_1" kp="40" kv="1"/>
-        <position name="knee_1_servo"  joint="knee_1" kp="40" kv="1"/>
-        <position name="ankle_1_servo"  joint="ankle_1" kp="40" kv="1"/>
-        <position name="hip_2_servo"  joint="hip_2" kp="40" kv="1"/>
-        <position name="knee_2_servo"  joint="knee_2" kp="40" kv="1"/>
-        <position name="ankle_2_servo"  joint="ankle_2" kp="40" kv="1"/>
-        <position name="hip_3_servo"  joint="hip_3" kp="40" kv="1"/>
-        <position name="knee_3_servo"  joint="knee_3" kp="40" kv="1"/>
-        <position name="ankle_3_servo"  joint="ankle_3" kp="40" kv="1"/>
-        <position name="hip_4_servo"  joint="hip_4" kp="40" kv="1"/>
-        <position name="knee_4_servo"  joint="knee_4" kp="40" kv="1"/>
-        <position name="ankle_4_servo"  joint="ankle_4" kp="40" kv="1"/>
+        <position name="hip_1_servo"  joint="hip_1" kp="40" kv="1" forcerange="-2.0 2.0" ctrlrange="-0.69 0.69"/>
+        <position name="knee_1_servo"  joint="knee_1" kp="40" kv="1" forcerange="-2.0 2.0" ctrlrange="-1.5 1.5"/>
+        <position name="ankle_1_servo"  joint="ankle_1" kp="40" kv="1" forcerange="-2.0 2.0" ctrlrange="-0.845 0.845"/>
+        <position name="hip_2_servo"  joint="hip_2" kp="40" kv="1" forcerange="-2.0 2.0" ctrlrange="-0.69 0.69"/>
+        <position name="knee_2_servo"  joint="knee_2" kp="40" kv="1" forcerange="-2.0 2.0" ctrlrange="-1.5 1.5"/>
+        <position name="ankle_2_servo"  joint="ankle_2" kp="40" kv="1" forcerange="-2.0 2.0" ctrlrange="-0.845 0.845"/>
+        <position name="hip_3_servo"  joint="hip_3" kp="40" kv="1" forcerange="-2.0 2.0" ctrlrange="-0.69 0.69"/>
+        <position name="knee_3_servo"  joint="knee_3" kp="40" kv="1" forcerange="-2.0 2.0" ctrlrange="-1.5 1.5"/>
+        <position name="ankle_3_servo"  joint="ankle_3" kp="40" kv="1" forcerange="-2.0 2.0" ctrlrange="-0.845 0.845"/>
+        <position name="hip_4_servo"  joint="hip_4" kp="40" kv="1" forcerange="-2.0 2.0" ctrlrange="-0.69 0.69"/>
+        <position name="knee_4_servo"  joint="knee_4" kp="40" kv="1" forcerange="-2.0 2.0" ctrlrange="-1.5 1.5"/>
+        <position name="ankle_4_servo"  joint="ankle_4" kp="40" kv="1" forcerange="-2.0 2.0" ctrlrange="-0.845 0.845"/>
     </actuator>
     <sensor>
         <jointpos name="hip_1_pos" joint="hip_1"/>
-        <jointvel name="hip_1_vel" joint="hip_1"/>
-        <actuatorfrc name="hip_1_load" actuator="hip_1_servo"/>
         <jointpos name="knee_1_pos" joint="knee_1"/>
-        <jointvel name="knee_1_vel" joint="knee_1"/>
-        <actuatorfrc name="knee_1_load" actuator="knee_1_servo"/>
         <jointpos name="ankle_1_pos" joint="ankle_1"/>
-        <jointvel name="ankle_1_vel" joint="ankle_1"/>
-        <actuatorfrc name="ankle_1_load" actuator="ankle_1_servo"/>
-
         <jointpos name="hip_2_pos" joint="hip_2"/>
-        <jointvel name="hip_2_vel" joint="hip_2"/>
-        <actuatorfrc name="hip_2_load" actuator="hip_2_servo"/>
         <jointpos name="knee_2_pos" joint="knee_2"/>
-        <jointvel name="knee_2_vel" joint="knee_2"/>
-        <actuatorfrc name="knee_2_load" actuator="knee_2_servo"/>
         <jointpos name="ankle_2_pos" joint="ankle_2"/>
-        <jointvel name="ankle_2_vel" joint="ankle_2"/>
-        <actuatorfrc name="ankle_2_load" actuator="ankle_2_servo"/>
-
         <jointpos name="hip_3_pos" joint="hip_3"/>
-        <jointvel name="hip_3_vel" joint="hip_3"/>
-        <actuatorfrc name="hip_3_load" actuator="hip_3_servo"/>
         <jointpos name="knee_3_pos" joint="knee_3"/>
-        <jointvel name="knee_3_vel" joint="knee_3"/>
-        <actuatorfrc name="knee_3_load" actuator="knee_3_servo"/>
         <jointpos name="ankle_3_pos" joint="ankle_3"/>
-        <jointvel name="ankle_3_vel" joint="ankle_3"/>
-        <actuatorfrc name="ankle_3_load" actuator="ankle_3_servo"/>
-
         <jointpos name="hip_4_pos" joint="hip_4"/>
-        <jointvel name="hip_4_vel" joint="hip_4"/>
-        <actuatorfrc name="hip_4_load" actuator="hip_4_servo"/>
         <jointpos name="knee_4_pos" joint="knee_4"/>
-        <jointvel name="knee_4_vel" joint="knee_4"/>
-        <actuatorfrc name="knee_4_load" actuator="knee_4_servo"/>
         <jointpos name="ankle_4_pos" joint="ankle_4"/>
-        <jointvel name="ankle_4_vel" joint="ankle_4"/>
-        <actuatorfrc name="ankle_4_load" actuator="ankle_4_servo"/>
 
+        <jointvel name="hip_1_vel" joint="hip_1"/>
+        <jointvel name="knee_1_vel" joint="knee_1"/>
+        <jointvel name="ankle_1_vel" joint="ankle_1"/>
+        <jointvel name="hip_2_vel" joint="hip_2"/>
+        <jointvel name="knee_2_vel" joint="knee_2"/>
+        <jointvel name="ankle_2_vel" joint="ankle_2"/>
+        <jointvel name="hip_3_vel" joint="hip_3"/>
+        <jointvel name="knee_3_vel" joint="knee_3"/>
+        <jointvel name="ankle_3_vel" joint="ankle_3"/>
+        <jointvel name="hip_4_vel" joint="hip_4"/>
+        <jointvel name="knee_4_vel" joint="knee_4"/>
+        <jointvel name="ankle_4_vel" joint="ankle_4"/>
+
+        <framelinvel name="base_linvel" objtype="body" objname="base"/>
         <accelerometer name="imu_acc" site="imu_site"/>
         <gyro name="imu_gyro" site="imu_site"/>
+        <framequat name="imu_quat" objtype="site" objname="imu_site"/>
 
         <touch name="foot_1_touch" site="foot_1_site"/>
         <touch name="foot_2_touch" site="foot_2_site"/>
