@@ -5,7 +5,7 @@ joints = ["hip_1","knee_1","ankle_1",
           "hip_2","knee_2","ankle_2",
           "hip_3","knee_3","ankle_3",
           "hip_4","knee_4","ankle_4",]
-noise_ratio = {"servo_pos": 0.005, "servo_vel": 0.05,"servo_pos_bias": 0.01, "servo_vel_bias": 0.05,
+noise_ratio = {"servo_pos": 0.005, "servo_vel": 0.05,"servo_pos_bias": 0.01,
                 "base_gyro": 0.05, "base_gyro_bias": 0.02, "sim_imu": 0.02,"zero_offset":0.01}
 world_noise = {"base_mass":0.15, "base_pos":0.015, "infill_mass": 0.1, "gearbox": 0.3, "armature": 0.3,"friction": 0.05,"strength":0.15}
 class DataHandler:
