@@ -1,56 +1,96 @@
 import mujoco
 import torch
 import numpy as np
+joints = ["hip_1","knee_1","ankle_1",
+          "hip_2","knee_2","ankle_2",
+          "hip_3","knee_3","ankle_3",
+          "hip_4","knee_4","ankle_4",]
+noise_ratio = {"servo_pos": 0.005, "servo_vel": 0.05,"servo_pos_bias": 0.01, "servo_vel_bias": 0.05,
+                "base_gyro": 0.05, "base_gyro_bias": 0.02, "sim_imu": 0.02,"zero_offset":0.01}
+world_noise = {"base_mass":0.15, "base_pos":0.015, "infill_mass": 0.1, "gearbox": 0.3, "armature": 0.3,"friction": 0.05,"strength":0.15}
 class DataHandler:
-    def __init__(self,nominal,noise_ratio):
-        noise_ratio = {"servo_pos_noise":0.01, "servo_vel_noise":0.08, "servo_pos_bias": 0.09, "servo_vel_bias":0.05,
-                       "base_gyro_noise":0.05, "base_gyro_bias":0.05, "sim_imu_noise":0.04}
-        self.servo_pos_nr = noise_ratio["servo_pos_noise"]
-        self.servo_vel_nr = noise_ratio["servo_vel_noise"]
-        self.servo_pos_bias = noise_ratio["servo_pos_bias"]
-        self.servo_vel_bias = noise_ratio["servo_vel_bias"]
-        self.gyro_nr = noise_ratio["base_gyro_noise"]
-        self.gyro_bias = noise_ratio["base_gyro_bias"]
-        self.sim_imu_nr = noise_ratio["sim_imu_noise"]
-        self.nominal = nominal
+    def __init__(self,model,seed=42):
+        self.n_joints = len(joints)
+        self.base_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, "base")
+        self.floor_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_GEOM, "floor")
+
+        joint_ids = [mujoco.mj_name2id(model,mujoco.mjtObj.mjOBJ_JOINT,j) for j in joints]
+        self.joint_dof_adr = np.array([model.jnt_dofadr[i] for i in joint_ids])
+
+        sensor_id_pos = [mujoco.mj_name2id(model,mujoco.mjtObj.mjOBJ_SENSOR,j + "_pos") for j in joints]
+        self.sensor_pos_adr = np.array([model.sensor_adr[i] for i in sensor_id_pos])
+
+        sensor_id_vel = [mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SENSOR, j + "_vel") for j in joints]
+        self.sensor_vel_adr = np.array([model.sensor_adr[i] for i in sensor_id_vel])
+
+        quat_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SENSOR, "imu_quat")
+        quat_ad = model.sensor_adr[quat_id]
+        self.quat_adr = np.arange(quat_ad, quat_ad + 4)
+        gyro_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SENSOR, "imu_gyro")
+        gyro_ad = model.sensor_adr[gyro_id]
+        self.gyro_adr = np.arange(gyro_ad, gyro_ad + 3)
+
+        self.num_ac = model.nu
+        act_of = {int(model.actuator_trnid[a, 0]): a for a in range(model.nu)}
+        try:
+            self.ctrl_idx = np.array([act_of[i] for i in joint_ids])
+        except KeyError as e:
+            raise KeyError(e)
+
+        cr = model.actuator_ctrlrange[self.ctrl_idx]
+        self.ctrl_lo, self.ctrl_hi = cr[:, 0].copy(), cr[:, 1].copy()
+        self.ctrl_half = (self.ctrl_hi - self.ctrl_lo) / 2
+
+        self.nominal = {
+            "body_mass": model.body_mass.copy(),
+            "body_inertia": model.body_inertia.copy(),
+            "body_ipos": model.body_ipos.copy(),
+            "dof_damping": model.dof_damping.copy(),
+            "dof_armature": model.dof_armature.copy(),
+            "dof_frictionloss": model.dof_frictionloss.copy(),
+            "floor_friction": model.geom_friction[self.floor_id, 0].copy(),
+            "forcerange": model.actuator_forcerange.copy(),
+        }
         self.noise_ratio = noise_ratio
-        self.servo_pos_bias_episode = None
-        self.servo_vel_bias_episode = None
-        self.accel_bias_episode = None
-        self.gyro_bias_episode = None
+        self.world_noise = world_noise
+        self.rng = np.random.default_rng(seed=seed)
+        self.pos_bias_ep = None
+        self.servo_vel_bias_ep = None
+        self.gyro_bias_ep = None
+        self.zero_offset_ep = None
+        self.reset_noise(0.0)
         pass
     def step(self, data, s):
-        servo_pos = torch.cat((data.sensor("hip_1_pos").data, data.sensor("knee_1_pos").data,data.sensor("ankle_1_pos").data,
-                               data.sensor("hip_2_pos").data, data.sensor("knee_2_pos").data,data.sensor("ankle_2_pos").data,
-                               data.sensor("hip_3_pos").data, data.sensor("knee_3_pos").data,data.sensor("ankle_3_pos").data,
-                               data.sensor("hip_4_pos").data, data.sensor("knee_4_pos").data,data.sensor("ankle_4_pos").data,),dim=0)
-        for i in range(len(servo_pos)):
-            servo_pos[i] += s*(np.random.uniform(-self.servo_pos_nr,self.servo_pos_nr) + self.servo_pos_bias_episode)
+        sd = data.sensordata.copy()
 
-        servo_vel = torch.cat((data.sensor("hip_1_vel").data, data.sensor("knee_1_vel").data,data.sensor("ankle_1_vel").data,
-                               data.sensor("hip_2_vel").data, data.sensor("knee_2_vel").data,data.sensor("ankle_2_vel").data,
-                               data.sensor("hip_3_vel").data, data.sensor("knee_3_vel").data,data.sensor("ankle_3_vel").data,
-                               data.sensor("hip_4_vel").data, data.sensor("knee_4_vel").data,data.sensor("ankle_4_vel").data,),dim=0)
+        servo_pos = sd[self.sensor_pos_adr] + self.pos_bias_ep
+        servo_pos += s*self.rng.normal(0,self.noise_ratio["servo_pos"],size=self.n_joints)
 
-        for i in range(len(servo_vel)):
-            servo_vel[i] *= (1+s*(np.random.uniform(-self.servo_vel_nr,self.servo_vel_nr + self.servo_vel_bias_episode)))
+        servo_vel = sd[self.sensor_vel_adr]
+        servo_vel += s*self.rng.normal(0,self.noise_ratio["servo_vel"],size=self.n_joints)
 
-        quat_data = data.sensor("imu_quat").data
-        sim_imu_reading = self.quat_to_gravity(quat_data)
+        grav = self.projected_gravity(sd[self.quat_adr])
+        grav += s*self.rng.normal(0,self.noise_ratio["sim_imu"],size=3)
 
-        for i in range(len(sim_imu_reading)):
-            sim_imu_reading[i] += s*np.random.uniform(-self.sim_imu_nr,self.sim_imu_nr)
+        gyro = sd[self.gyro_adr]
+        gyro += s*self.rng.normal(0,self.noise_ratio["base_gyro"],size=3)
+        return np.concat((servo_pos, servo_vel, grav, gyro))
+    @staticmethod
+    def projected_gravity(quat):
+        conj = np.zeros(4)
+        mujoco.mju_negQuat(conj, quat.astype(np.float64))
+        down = np.zeros(3)
+        mujoco.mju_rotVecQuat(down, np.array([0.0, 0.0, -1.0]), conj)
+        return down
 
-        gyro_data = data.sensor("imu_gyro").data
-        for i in range(len(gyro_data)):
-            gyro_data[i] += s*(np.random.uniform(-self.gyro_nr,self.gyro_nr) + self.gyro_bias_episode)
-        return np.concat((servo_pos, servo_vel, sim_imu_reading, gyro_data), axis=0)
-    def set_servos(self,action,s,data):
-        for i in range(0,len(action),3):
-            action[i] = self.denorm_hip(action[i])
-            action[i + 1] = self.denorm_knee(action[i + 1])
-            action[i + 2] = self.denorm_ankle(action[i + 2])
-        pass
+    def set_servos(self,action):
+        target = self.ctrl_half * action + self.zero_offset_ep
+        target = np.clip(target, self.ctrl_lo, self.ctrl_hi)
+
+        ctrl = np.zeros(self.n_joints)
+        ctrl[self.ctrl_idx] = target
+        return ctrl
+
     def denorm_hip(self,norm_val):
         return norm_val*0.69
     def denorm_knee(self,norm_val):
@@ -58,30 +98,37 @@ class DataHandler:
     def denorm_ankle(self,norm_val):
         return norm_val*0.845
     def reset_noise(self,s):
-        self.servo_pos_bias_episode = s*np.random.uniform(-self.servo_pos_bias,self.servo_pos_bias)
-        self.servo_vel_bias_episode = s*np.random.uniform(-self.servo_vel_bias,self.servo_vel_bias)
-        self.gyro_bias_episode = s*np.random.uniform(-self.gyro_bias,self.gyro_bias)
-
+        s = float(np.clip(s,0,1))
+        self.pos_bias_ep = s*self.rng.uniform(-self.noise_ratio["servo_pos_bias"],self.noise_ratio["servo_pos_bias"],size=self.n_joints)
+        self.gyro_bias_ep = s*self.rng.uniform(-self.noise_ratio["base_gyro_bias"],self.noise_ratio["base_gyro_bias"],size=3)
+        self.zero_offset_ep = s*self.rng.uniform(-self.noise_ratio["zero_offset"],self.noise_ratio["zero_offset"],size=self.n_joints)
         pass
-    def quat_to_gravity(self,quat, gravity_mag=9.81):
-        # quat = [w, x, y, z]
-        w, x, y, z = quat
 
-        # Global gravity vector (assuming Z is up, gravity points down)
-        # If your simulation uses Y-up, adjust accordingly (e.g., [0, -g, 0])
-        g_global = np.array([0, 0, -gravity_mag])
+    def reset_world_random(self,model,data,s):
+        s = float(np.clip(s, 0.0, 1.0))
 
-        # Rotation matrix derived from quaternion to rotate global vector to local frame
-        # This is equivalent to R^T * g_global where R is the rotation matrix of q
-        R = np.array([
-            [1 - 2 * y * y - 2 * z * z, 2 * x * y - 2 * z * w, 2 * x * z + 2 * y * w],
-            [2 * x * y + 2 * z * w, 1 - 2 * x * x - 2 * z * z, 2 * y * z - 2 * x * w],
-            [2 * x * z - 2 * y * w, 2 * y * z + 2 * x * w, 1 - 2 * x * x - 2 * y * y]
-        ])
+        f = 1.0+s*self.rng.uniform(self.world_noise["infill_mass"],self.world_noise["infill_mass"],model.nbody)
+        f[0] = 0.0
+        f[self.base_id] = 1.0+s*self.rng.uniform(self.world_noise["base_mass"],self.world_noise["base_mass"])
+        model.body_mass[:] = self.nominal["body_mass"] * f
+        model.body_inertia[:] = self.nominal["body_inertia"] * f[:, None]
 
-        # For "sensor frame" gravity, we often want the vector as measured by the sensor
-        # which is effectively the global gravity rotated by the inverse of the body orientation.
-        # Since R rotates local -> global, R.T rotates global -> local.
-        g_local = R.T @ g_global
+        model.body_ipos[:] = self.nominal["body_ipos"]
+        model.body_ipos[self.base_id] += s*self.rng.uniform(-self.world_noise["base_pos"],self.world_noise["base_pos"],size=3)
 
-        return g_local
+        da = self.joint_dof_adr
+        model.dof_damping[da] = self.nominal["dof_damping"][da] * (1 + s*self.rng.uniform(-self.world_noise["gearbox"],self.world_noise["gearbox"],size=self.n_joints))
+        model.dof_armature[da] = self.nominal["dof_armature"][da] * (1 + s*self.rng.uniform(-self.world_noise["armature"],self.world_noise["armature"],size=self.n_joints))
+        model.dof_frictionloss[da] = (self.nominal["dof_frictionloss"][da] + s*self.rng.uniform(0,self.world_noise["friction"],size=self.n_joints))
+
+        ac_weakness = 1.0 + s*self.rng.uniform(-self.world_noise["strength"],0,size=(self.num_ac,1))
+        model.actuator_forcerange[:] = self.nominal["forcerange"]*ac_weakness
+
+        model.geom_priority[self.floor_id] = 1
+        model.geom_friction[self.floor_id,0] = (self.nominal["floor_friction"]*(1+s*self.rng.uniform(-self.world_noise["friction"],self.world_noise["friction"])))
+
+        mujoco.mj_setConst(model, data)
+        mujoco.mj_forward(model, data)
+        self.reset_noise(s)
+
+        return model,data
