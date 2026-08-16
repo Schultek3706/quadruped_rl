@@ -20,11 +20,12 @@ if __name__ == "__main__":
             mujoco.mj_resetData(model, data)
             handler.reset_world_random(model, data,i / 10)
             phase = rng.uniform(-1, 1, 12)
+            movement_speed = rng.uniform(1, 3, 12)
             for j in range(10000):
                 time.sleep(0.001)
                 sign = np.where(phase >= 1,-1, sign)
-                sign = np.where(phase <= 0,1, sign)
-                phase += sign/1000
+                sign = np.where(phase <= -1,1, sign)
+                phase += sign/1000*movement_speed
                 phase.clip(-1,1)
                 pos_goal = handler.set_servos(phase)
                 if j%1000 == 0:
