@@ -85,6 +85,10 @@
             </body>
         </body>
     </worldbody>
+    <keyframe>
+        <key name="stand" qpos="0 0 0.172  1 0 0 0  0 .6 -1.1  0 .6 -1.1  0 .6 -1.1  0 .6 -1.1"
+             ctrl="0 .6 -1.1  0 .6 -1.1  0 .6 -1.1  0 .6 -1.1"/>
+    </keyframe>
     <actuator>
         <position name="hip_1_servo"  joint="hip_1" kp="40" kv="1" forcerange="-2.0 2.0" ctrlrange="-0.69 0.69"/>
         <position name="knee_1_servo"  joint="knee_1" kp="40" kv="1" forcerange="-2.0 2.0" ctrlrange="-1.5 1.5"/>
