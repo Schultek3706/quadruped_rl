@@ -130,7 +130,7 @@
         <jointvel name="knee_4_vel" joint="knee_4"/>
         <jointvel name="ankle_4_vel" joint="ankle_4"/>
 
-        <framelinvel name="base_linvel" objtype="body" objname="base"/>
+        <velocimeter name="base_linvel" site="imu_site"/>
         <accelerometer name="imu_acc" site="imu_site"/>
         <gyro name="imu_gyro" site="imu_site"/>
         <framequat name="imu_quat" objtype="site" objname="imu_site"/>
