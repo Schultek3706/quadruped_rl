@@ -25,11 +25,12 @@ if __name__ == "__main__":
                 time.sleep(0.001)
                 sign = np.where(phase >= 1,-1, sign)
                 sign = np.where(phase <= -1,1, sign)
-                phase += sign/1000*movement_speed
+                phase += sign/10000*movement_speed
                 phase.clip(-1,1)
                 pos_goal = handler.set_servos(phase)
                 if j%1000 == 0:
-                    print(handler.step(data,s = (j * i) / 10000))
+                    print(handler.reward_data(data))
+                    print(handler.get_obs(data,0).shape)
                 data.ctrl[:] = pos_goal
                 mujoco.mj_step(model,data,1)
                 viewer.sync()
