@@ -1,6 +1,7 @@
 import mujoco
 import torch
 import numpy as np
+from scipy.spatial.transform import Rotation as R
 joints = ["hip_1","knee_1","ankle_1",
           "hip_2","knee_2","ankle_2",
           "hip_3","knee_3","ankle_3",
@@ -29,6 +30,10 @@ class DataHandler:
         gyro_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SENSOR, "imu_gyro")
         gyro_ad = model.sensor_adr[gyro_id]
         self.gyro_adr = np.arange(gyro_ad, gyro_ad + 3)
+
+        lin_vel_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SENSOR, "base_linvel")
+        lin_vel_ad = model.sensor_adr[lin_vel_id]
+        self.lin_vel_adr = np.arange(lin_vel_ad, lin_vel_ad + 3)
 
         self.num_ac = model.nu
         act_of = {int(model.actuator_trnid[a, 0]): a for a in range(model.nu)}
@@ -60,7 +65,7 @@ class DataHandler:
         self.zero_offset_ep = None
         self.reset_noise(0.0)
         pass
-    def step(self, data, s):
+    def get_obs(self, data, s):
         sd = data.sensordata.copy()
 
         servo_pos = sd[self.sensor_pos_adr] + self.pos_bias_ep
@@ -75,6 +80,20 @@ class DataHandler:
         gyro = sd[self.gyro_adr]
         gyro += s*self.rng.normal(0,self.noise_ratio["base_gyro"],size=3)
         return np.concat((servo_pos, servo_vel, grav, gyro))
+    def reward_data(self,data):
+
+        v_base = data.sensordata[self.lin_vel_adr].copy()
+        rot_vel = data.sensordata[self.gyro_adr].copy()
+
+        grav = self.projected_gravity(data.sensordata[self.quat_adr])
+        height = data.xpos[self.base_id][2]
+
+        servo_pos = data.sensordata[self.sensor_pos_adr].copy()
+        servo_vel = data.sensordata[self.sensor_vel_adr].copy()
+
+
+        ac_force = data.actuator_force.copy()
+        return v_base, grav, height, servo_pos, servo_vel, rot_vel, ac_force
     @staticmethod
     def projected_gravity(quat):
         conj = np.zeros(4)
@@ -90,13 +109,6 @@ class DataHandler:
         ctrl = np.zeros(self.n_joints)
         ctrl[self.ctrl_idx] = target
         return ctrl
-
-    def denorm_hip(self,norm_val):
-        return norm_val*0.69
-    def denorm_knee(self,norm_val):
-        return norm_val*1.5
-    def denorm_ankle(self,norm_val):
-        return norm_val*0.845
     def reset_noise(self,s):
         s = float(np.clip(s,0,1))
         self.pos_bias_ep = s*self.rng.uniform(-self.noise_ratio["servo_pos_bias"],self.noise_ratio["servo_pos_bias"],size=self.n_joints)
