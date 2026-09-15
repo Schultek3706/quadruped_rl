@@ -28,8 +28,11 @@ if __name__ == "__main__":
                 phase += sign/10000*movement_speed
                 phase.clip(-1,1)
                 pos_goal = handler.set_servos(phase)
+                r_data = handler.reward_data(data)
+                #idx = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SENSOR, "base_touch")
+                #print(data.sensordata[idx])
                 if j%1000 == 0:
-                    print(handler.reward_data(data))
+                    print(handler.reward_data(data)[2])
                     print(handler.get_obs(data,0).shape)
                 data.ctrl[:] = pos_goal
                 mujoco.mj_step(model,data,1)
