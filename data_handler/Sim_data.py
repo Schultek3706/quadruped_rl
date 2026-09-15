@@ -35,6 +35,10 @@ class DataHandler:
         lin_vel_ad = model.sensor_adr[lin_vel_id]
         self.lin_vel_adr = np.arange(lin_vel_ad, lin_vel_ad + 3)
 
+        base_touch_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SENSOR, "base_touch")
+        base_touch_ad = model.sensor_adr[base_touch_id]
+        self.base_touch_adr = base_touch_ad
+
         self.num_ac = model.nu
         act_of = {int(model.actuator_trnid[a, 0]): a for a in range(model.nu)}
         try:
@@ -91,7 +95,8 @@ class DataHandler:
         servo_pos = data.sensordata[self.sensor_pos_adr].copy()
         servo_vel = data.sensordata[self.sensor_vel_adr].copy()
 
-
+        #base_touch = data.sensordata[self.base_touch_adr].copy()
+        #print(base_touch)
         ac_force = data.actuator_force.copy()
         return v_base, grav, height, servo_pos, servo_vel, rot_vel, ac_force
     @staticmethod
