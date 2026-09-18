@@ -42,3 +42,27 @@ The gyro of the base 5%<br>
 The base-gyro bias 2%<br>
 The simulated imu 2%<br>
 </p>
+<h2>The Reward function</h2>
+<p>
+The goal of the reward function as already said above is to favor a 
+stable forward walk with maximum speed while staying stable and to penalize shaking, tumbling over etc.
+For this the reward consists of several different terms which are:<br>
+Foreward velocity reward at right pace<br>
+Yaw reward for keeping the initial orientation<br>
+Fixed reward for being upright which acts as a staying alive reward<br>
+Two penalty terms if either the "belly" or "head" is touching something<br>
+Penalty terms for velocity in another direction than foreward<br>
+Penalty for rotational velocity of the base body<br>
+Penalty for not having a stable and upright base body rotational position<br>
+Penalty for having an unfavorable height of the base body<br>
+Penalty for swaying from the base stance in the servo positions<br>
+Penalty for servo velocities<br>
+Penalty for actuator force<br>
+Penalties for having changing actions for both velocity and acceleration<br>
+<br>
+Changes and problems with each version:<br>
+v0 - unstable shaky moving without clear direction and constant stumbling over
+-> implement the yaw penalty, disabling the height penalty and adding the belly 
+and head penalty instead, increasing rotational velocity penalty weight as well as rotational position weight
+v1 - no real meassureable foreward velocity due to wrong speed goal updating
+</p>

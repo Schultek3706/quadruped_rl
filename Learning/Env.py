@@ -3,6 +3,7 @@ import gymnasium as gym
 import numpy as np
 from pathlib import Path
 import mujoco
+import matplotlib.pyplot as plt
 
 class RunClass(gym.Env):
     def __init__(self, robot_path, seed = None):
@@ -23,7 +24,11 @@ class RunClass(gym.Env):
         self.last_action2 = np.ones(12)
         self.last_servo_vel = np.ones(12)
         self.avg_speed = 0
-        self.speed_goal = 0.2
+        self.avg_reward = 0
+        self.max_reward = 0
+        self.speed_goal = 0
+        self.yaw_base = 0
+        self.log = {"avg_reward": np.array([]), "max_reward": np.array([]), "avg_speed": np.array([]), "speed_goal": np.array([])}
         self.rng = np.random.default_rng(self.seed)
         self.handler = DataHandler(self.model,self.seed)
         self.ep_c = 0
@@ -49,7 +54,9 @@ class RunClass(gym.Env):
         self.orientation = np.ones(50 * 10)  # 5 seconds
         self.orientation = self.orientation.astype(bool)
         self.episode_step = 0
+        self.avg_reward = 0
         self.last_servo_vel = reward_data[4]
+        self.yaw_base = reward_data[9]
         info = {"speed": reward_data[0][0], "gravity_down": reward_data[1][2]}
         return self.obs.copy(), info
     def step(self, action): # 50hz control loop
@@ -61,13 +68,17 @@ class RunClass(gym.Env):
         mujoco.mj_step(self.model,self.data,10)
         obs_data = self.handler.get_obs(self.data,s)
         reward_data = self.handler.reward_data(self.data)
-        self.avg_speed = self.avg_speed*max(1,self.episode_step)/(self.episode_step+1) + reward_data[0][0]/(self.episode_step+ 1)
-        if reward_data[1][2] < 0 and reward_data[2] > 0.1:
+        self.avg_speed = self.avg_speed*self.episode_step/(self.episode_step+1) + reward_data[0][0]/(self.episode_step+ 1)
+
+        if reward_data[1][2] < 0:
             self.orientation = np.append(self.orientation,True)
         else:
             self.orientation = np.append(self.orientation,False)
         self.orientation = np.delete(self.orientation,0)
         reward = self.reward(reward_data,action,s)
+        self.avg_reward = self.avg_reward * self.episode_step / (self.episode_step + 1) + reward / (
+                    self.episode_step + 1)
+
         self.obs = np.append(self.obs,obs_data)
         self.obs = np.delete(self.obs,np.s_[0:30])
         info = {"speed": reward_data[0][0],"gravity_down": reward_data[1][2]}
@@ -76,16 +87,19 @@ class RunClass(gym.Env):
         self.episode_step += 1
         if np.all(self.orientation == False):
             terminated = True
-            reward -= 10
-            if self.avg_speed > 0.8 * self.speed_goal:
+            if self.avg_reward > 0.95 * self.max_reward and self.episode_step > 1000:
                 self.speed_goal = self.speed_goal + 0.05
+                self.max_reward = self.avg_reward
                 print(self.avg_speed)
+                self.logging()
         else:
             terminated = False
         if self.episode_step >= 50*120:
             truncated = True
-            if self.avg_speed > 0.8 * self.speed_goal:
-                self.speed_goal = self.speed_goal + 0.25
+            if self.avg_reward > 0.95 * self.max_reward:
+                self.speed_goal = self.speed_goal + 0.05
+                self.max_reward = self.avg_reward
+            self.logging()
             #print(self.avg_speed)
         else:
             truncated = False
@@ -93,26 +107,45 @@ class RunClass(gym.Env):
         reward = np.clip(reward,0,None)
         return self.obs.copy(), reward, terminated, truncated, info
     def reward(self,reward_data,action,s):
-        v_base, grav, height, servo_pos, servo_vel, rot_vel, ac_force = reward_data
+        v_base, grav, height, servo_pos, servo_vel, rot_vel, ac_force,base_touch, head_touch, yaw = reward_data
         base_pose =np.array([0, 0.6, -1.1, 0, 0.6, -1.1, 0, 0.6, -1.1, 0, 0.6, -1.1])
         SIGMA = 0.25
 
         vel_reward = 1.5*np.exp(-(self.avg_speed - v_base[0]) ** 2 / SIGMA)
-        yaw_reward = 0#0.5*np.exp(-(self.yaw - rot_vel) ** 2 / SIGMA)
-        alive_reward = 2
-
-        pen_vel = -0.5*v_base[1]**2 -2*v_base[2]**2
-        pen_rot_vel = -0.05 * (rot_vel[0] ** 2 + rot_vel[1] ** 2 + rot_vel[2]**2)
+        yaw_reward = 0.5*np.exp(-(yaw - self.yaw_base) ** 2 / SIGMA)
+        if grav[2] < 0:
+            alive_reward = 5
+        else:
+            alive_reward = 0
+        head_touch = -head_touch*2
+        base_touch = -base_touch
+        pen_vel = -0.5*(v_base[1]**2 + v_base[2]**2)
+        pen_rot_vel = -0.05 * (rot_vel[0] ** 2 + rot_vel[1] ** 2 + 2*rot_vel[2]**2)
         pen_grav = -2 * (grav[0] ** 2 + grav[1] ** 2)
-        pen_height = -5*(height - 0.12)
+        pen_height = -0*(height - 0.12)
 
         ac_vel = action - self.last_action
-        #ac_acc = action - 2 * self.last_action + self.last_action2
-        pen_servo_pos = -0.1 * np.sum((base_pose - servo_pos) ** 2)
+        ac_acc = action - 2 * self.last_action + self.last_action2
+        pen_servo_pos = -0.05 * np.sum((base_pose - servo_pos) ** 2)
         pen_servo_vel = -2e-4*np.sum(servo_vel ** 2)
         pen_force = -1e-4*np.sum((ac_force ** 2))
-        pen_ac = -0.01*np.sum((ac_vel) ** 2)
+        pen_ac = -0.02*np.sum((ac_vel) ** 2)
+        pen_ac_acc = -0.01*np.sum((ac_acc) ** 2)
         total_reward = (vel_reward + alive_reward + (pen_vel + pen_rot_vel + pen_servo_pos + pen_grav + pen_height + pen_force +
-                        pen_ac + yaw_reward + pen_servo_vel))
+                        pen_ac + pen_ac_acc + yaw_reward + pen_servo_vel + head_touch + base_touch))
         #print("total_reward",total_reward)
         return total_reward
+
+    def logging(self):
+        self.log["avg_reward"] = np.append(self.log["avg_reward"],self.avg_reward)
+        self.log["max_reward"] = np.append(self.log["max_reward"],self.max_reward)
+        self.log["avg_speed"] = np.append(self.log["avg_speed"],self.avg_speed)
+        self.log["speed_goal"] = np.append(self.log["speed_goal"],self.speed_goal)
+        fig, ax = plt.subplots(2,1)
+        ax[0].plot(self.log["avg_reward"])
+        ax[0].plot(self.log["max_reward"])
+        ax[1].plot(self.log["avg_speed"])
+        ax[1].plot(self.log["speed_goal"])
+        plt.savefig("log_" + str(self.seed) + ".png")
+        plt.close()
+        pass

@@ -22,7 +22,7 @@ policy_kwargs = dict(
     policy_kwargs=dict(
         net_arch=dict(pi=[512, 256, 128], vf=[512, 256, 128]),
         activation_fn=torch.nn.ELU,
-        log_std_init=-1.0,   # std ≈ 0.37 in Action-Skala
+        log_std_init=-0.5,   # std ≈ 0.37 in Action-Skala
         ortho_init=False,
     ),
 )
@@ -36,7 +36,7 @@ while True:
         while True:
             action = model.predict(obs,deterministic=True)[0]
             obs, reward, terminated, truncated, info = eval_env.step(action)
-            time.sleep(0.004)
+            time.sleep(0.020)
             viewer.sync()
             if terminated or truncated:
                 break

@@ -2,6 +2,7 @@ import mujoco
 import numpy as np
 import mujoco.viewer
 from pathlib import Path
+
 from Sim_data import DataHandler
 import time
 if __name__ == "__main__":

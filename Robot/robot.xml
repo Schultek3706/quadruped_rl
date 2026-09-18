@@ -11,6 +11,8 @@
             <freejoint/>
             <geom name="base_geom" type="box" size="0.08 0.08 0.020" mass="0.55"/>
             <site name="imu_site" pos="0 0 0" size="0.005"/>
+            <geom name="belly_ball" type = "box" pos = "0 0 -0.065" size="0.06 0.06 0.002"/>
+            <geom name="head_ball" type = "sphere" pos = "0 0 0.01" size = "0.02"/>
             <body name="upper_leg_1" pos="0.04 0.04 -0.045" euler = "0 0 -0.7854">
                 <joint name="hip_1" type="hinge" axis="0 0 1" range="-0.698 0.698"/>
                 <geom type="box" size="0.02 0.01 0.02" mass="0.06" contype="0" conaffinity="0"/>
@@ -135,6 +137,8 @@
         <gyro name="imu_gyro" site="imu_site"/>
         <framequat name="imu_quat" objtype="site" objname="imu_site"/>
 
+        <contact name = "belly_touch" geom1 = "belly_ball"/>
+        <contact name= "head_touch" geom1 = "head_ball" geom2 = "floor"/>
         <touch name="foot_1_touch" site="foot_1_site"/>
         <touch name="foot_2_touch" site="foot_2_site"/>
         <touch name="foot_3_touch" site="foot_3_site"/>

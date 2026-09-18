@@ -35,9 +35,13 @@ class DataHandler:
         lin_vel_ad = model.sensor_adr[lin_vel_id]
         self.lin_vel_adr = np.arange(lin_vel_ad, lin_vel_ad + 3)
 
-        base_touch_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SENSOR, "base_touch")
+        base_touch_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SENSOR, "belly_touch")
         base_touch_ad = model.sensor_adr[base_touch_id]
         self.base_touch_adr = base_touch_ad
+
+        head_touch_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SENSOR, "head_touch")
+        head_touch_ad = model.sensor_adr[head_touch_id]
+        self.head_touch_adr = head_touch_ad
 
         self.num_ac = model.nu
         act_of = {int(model.actuator_trnid[a, 0]): a for a in range(model.nu)}
@@ -95,10 +99,14 @@ class DataHandler:
         servo_pos = data.sensordata[self.sensor_pos_adr].copy()
         servo_vel = data.sensordata[self.sensor_vel_adr].copy()
 
-        #base_touch = data.sensordata[self.base_touch_adr].copy()
-        #print(base_touch)
+        base_touch = data.sensordata[self.base_touch_adr].copy()
+        head_touch = data.sensordata[self.head_touch_adr].copy()
+
+        R = data.xmat[self.base_id].reshape(3,3)
+        yaw = self.calc_yaw(R)
+
         ac_force = data.actuator_force.copy()
-        return v_base, grav, height, servo_pos, servo_vel, rot_vel, ac_force
+        return v_base, grav, height, servo_pos, servo_vel, rot_vel, ac_force,base_touch, head_touch, yaw
     @staticmethod
     def projected_gravity(quat):
         conj = np.zeros(4)
@@ -106,6 +114,12 @@ class DataHandler:
         down = np.zeros(3)
         mujoco.mju_rotVecQuat(down, np.array([0.0, 0.0, -1.0]), conj)
         return down
+    @staticmethod
+    def calc_yaw(R):
+        yaw = np.arctan2(R[1,0],R[0,0])
+        yaw = (yaw + np.pi) % (2*np.pi) - np.pi
+        return yaw
+
 
     def set_servos(self,action):
         target = self.ctrl_half * action + self.zero_offset_ep
