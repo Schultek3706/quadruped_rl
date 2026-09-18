@@ -120,7 +120,7 @@ class RunClass(gym.Env):
         SIGMA = 0.25
 
         vel_reward = 5*v_base[0]*np.exp(-(self.avg_speed - v_base[0]) ** 2 / SIGMA)
-        yaw_reward = 1*np.exp(-(yaw - self.yaw_base) ** 2 / SIGMA)
+        yaw_reward = 1*np.exp(-(yaw - self.yaw_base) ** 2 / (SIGMA*2))
         if grav[2] < 0:
             alive_reward = 1
         else:
@@ -129,7 +129,7 @@ class RunClass(gym.Env):
         base_touch = -base_touch*2
         pen_vel = -0.5*(v_base[1]**2 + v_base[2]**2)
         pen_rot_vel = -0.05 * (rot_vel[0] ** 2 + rot_vel[1] ** 2 + 2*rot_vel[2]**2)
-        pen_grav = -0.1 * (grav[0] ** 2 + grav[1] ** 2)
+        pen_grav = -0.2 * (grav[0] ** 2 + grav[1] ** 2)
         pen_height = -0*(height - 0.12)
 
         ac_vel = action - self.last_action
@@ -149,11 +149,19 @@ class RunClass(gym.Env):
         self.log["max_reward"] = np.append(self.log["max_reward"],self.max_reward)
         self.log["avg_speed"] = np.append(self.log["avg_speed"],self.avg_speed)
         self.log["speed_goal"] = np.append(self.log["speed_goal"],self.speed_goal)
-        fig, ax = plt.subplots(2,1)
-        ax[0].plot(self.log["avg_reward"])
-        ax[0].plot(self.log["max_reward"])
-        ax[1].plot(self.log["avg_speed"])
-        ax[1].plot(self.log["speed_goal"])
+        fig, ax = plt.subplots(1,2,figsize=(13,5))
+        ax[0].plot(self.log["avg_reward"],label="avg_reward")
+        ax[0].plot(self.log["max_reward"],label="max_reward")
+        ax[0].set_title("Rewards")
+        ax[0].set_xlabel("Episodes")
+        ax[0].set_ylabel("Rewards")
+        ax[1].plot(self.log["avg_speed"],label="avg_speed")
+        ax[1].plot(self.log["speed_goal"],label="speed_goal")
+        ax[1].set_title("Speed")
+        ax[1].set_xlabel("Episodes")
+        ax[1].set_ylabel("Velocity")
+        ax[0].legend()
+        ax[1].legend()
         plt.savefig("log_" + str(self.seed) + ".png")
         plt.close()
         pass
