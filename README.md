@@ -60,9 +60,12 @@ Penalty for servo velocities<br>
 Penalty for actuator force<br>
 Penalties for having changing actions for both velocity and acceleration<br>
 <br>
-Changes and problems with each version:<br>
+Problems and possible solutions with each version:<br>
 v0 - unstable shaky moving without clear direction and constant stumbling over
 -> implement the yaw penalty, disabling the height penalty and adding the belly 
 and head penalty instead, increasing rotational velocity penalty weight as well as rotational position weight
-v1 - no real meassureable foreward velocity due to wrong speed goal updating
+v1 - no real meassureable foreward velocity due to wrong speed goal updating -> added some plot logging and higher velocity
+reward weight
+v2 - robot has no idea how fast it is going or how fast it has to go -> added last action and speed goal to the observation
+v3 - speed gain wasnt achieved rather stability with small movement was better -> changed the velocity reward and speed goal update rule
 </p>

@@ -28,8 +28,8 @@ policy_kwargs = dict(
 )
 env = make_vec_env(RunClass, n_envs=8, seed=42,env_kwargs={"robot_path": "robot.xml"})
 model = PPO("MlpPolicy",env,verbose=1,device="cpu",**policy_kwargs)
-model.learn(total_timesteps=1000000)
-eval_env = RunClass(seed=42,robot_path ="robot.xml")
+model.learn(total_timesteps=2500000)
+eval_env = RunClass(seed=41,robot_path ="robot.xml")
 while True:
     with mujoco.viewer.launch_passive(eval_env.model, eval_env.data) as viewer:
         obs,info = eval_env.reset()
