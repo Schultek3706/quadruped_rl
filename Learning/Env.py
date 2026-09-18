@@ -119,7 +119,7 @@ class RunClass(gym.Env):
         base_pose =np.array([0, 0.6, -1.1, 0, 0.6, -1.1, 0, 0.6, -1.1, 0, 0.6, -1.1])
         SIGMA = 0.25
 
-        vel_reward = 5*self.avg_speed*np.exp(-(self.avg_speed - v_base[0]) ** 2 / SIGMA)
+        vel_reward = 5*v_base[0]*np.exp(-(self.avg_speed - v_base[0]) ** 2 / SIGMA)
         yaw_reward = 1*np.exp(-(yaw - self.yaw_base) ** 2 / SIGMA)
         if grav[2] < 0:
             alive_reward = 1
