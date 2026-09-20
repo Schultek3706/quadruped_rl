@@ -69,5 +69,8 @@ reward weight<br>
 v2 - robot has no idea how fast it is going or how fast it has to go -> added last action and speed goal to the observation<br>
 v3 - speed gain wasnt achieved rather stability with small movement was better -> changed the velocity reward and speed goal update rule<br>
 v4 - still issues with velocity not increasing -> changing vel reward to scale with velocity instead of goal speed and slighty increasing
-rotational penalty weights
+rotational penalty weights<br>
+v5 - unstable walking resulting in abrupt small stops between steps and occasional falling over -> 
+increasing rotational velocity penalty weight and rotational position penalty weight<br>
+v6 - walking in circles and still small unstabilities -> connect the penalty weights for stability with foreward velocity to emphasize stability when walking fast
 </p>
