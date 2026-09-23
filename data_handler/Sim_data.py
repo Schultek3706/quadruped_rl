@@ -27,6 +27,7 @@ class DataHandler:
         quat_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SENSOR, "imu_quat")
         quat_ad = model.sensor_adr[quat_id]
         self.quat_adr = np.arange(quat_ad, quat_ad + 4)
+
         gyro_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SENSOR, "imu_gyro")
         gyro_ad = model.sensor_adr[gyro_id]
         self.gyro_adr = np.arange(gyro_ad, gyro_ad + 3)
@@ -87,7 +88,12 @@ class DataHandler:
 
         gyro = sd[self.gyro_adr]
         gyro += s*self.rng.normal(0,self.noise_ratio["base_gyro"],size=3)
-        return np.concat((servo_pos, servo_vel, grav, gyro))
+
+        quat = sd[self.quat_adr]
+        quat += s*self.rng.normal(0,self.noise_ratio["sim_imu"],size=4)
+        yaw = self.yaw_from_quat(quat)
+
+        return np.concat((servo_pos, 0.1*servo_vel, grav, 0.25*gyro,np.array([yaw])))
     def reward_data(self,data):
 
         v_base = data.sensordata[self.lin_vel_adr].copy()
@@ -103,10 +109,11 @@ class DataHandler:
         head_touch = data.sensordata[self.head_touch_adr].copy()
 
         R = data.xmat[self.base_id].reshape(3,3)
+        v_world = R @ v_base
         yaw = self.calc_yaw(R)
 
         ac_force = data.actuator_force.copy()
-        return v_base, grav, height, servo_pos, servo_vel, rot_vel, ac_force,base_touch, head_touch, yaw
+        return v_world, grav, height, servo_pos, servo_vel, rot_vel, ac_force,base_touch, head_touch, yaw
     @staticmethod
     def projected_gravity(quat):
         conj = np.zeros(4)
@@ -120,6 +127,10 @@ class DataHandler:
         yaw = (yaw + np.pi) % (2*np.pi) - np.pi
         return yaw
 
+    @staticmethod
+    def yaw_from_quat(quat):
+        w, x, y, z = quat
+        return np.arctan2(2.0 * (w * z + x * y), 1.0 - 2.0 * (y * y + z * z))
 
     def set_servos(self,action):
         target = self.ctrl_half * action + self.zero_offset_ep
@@ -138,7 +149,7 @@ class DataHandler:
     def reset_world_random(self,model,data,s):
         s = float(np.clip(s, 0.0, 1.0))
 
-        f = 1.0+s*self.rng.uniform(self.world_noise["infill_mass"],self.world_noise["infill_mass"],model.nbody)
+        f = 1.0+s*self.rng.uniform(0,self.world_noise["infill_mass"],model.nbody)
         f[0] = 0.0
         f[self.base_id] = 1.0+s*self.rng.uniform(self.world_noise["base_mass"],self.world_noise["base_mass"])
         model.body_mass[:] = self.nominal["body_mass"] * f
@@ -159,7 +170,8 @@ class DataHandler:
         model.geom_friction[self.floor_id,0] = (self.nominal["floor_friction"]*(1+s*self.rng.uniform(-self.world_noise["friction"],self.world_noise["friction"])))
 
         mujoco.mj_setConst(model, data)
-        mujoco.mj_forward(model, data)
         self.reset_noise(s)
-
+        mujoco.mj_resetData(model, data)
+        data.qpos[2] = 0.19
+        mujoco.mj_forward(model, data)
         return model,data

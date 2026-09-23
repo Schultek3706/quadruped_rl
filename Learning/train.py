@@ -22,13 +22,14 @@ policy_kwargs = dict(
     policy_kwargs=dict(
         net_arch=dict(pi=[512, 256, 128], vf=[512, 256, 128]),
         activation_fn=torch.nn.ELU,
-        log_std_init=-0.5,   # std ≈ 0.37 in Action-Skala
+        log_std_init=-0.5,   # std ≈ 0.61 in Action-Skala
         ortho_init=False,
     ),
 )
 env = make_vec_env(RunClass, n_envs=8, seed=42,env_kwargs={"robot_path": "robot.xml"})
 model = PPO("MlpPolicy",env,verbose=1,device="cpu",**policy_kwargs)
 model.learn(total_timesteps=2500000)
+model.save("PPO_v7")
 eval_env = RunClass(seed=41,robot_path ="robot.xml")
 while True:
     with mujoco.viewer.launch_passive(eval_env.model, eval_env.data) as viewer:

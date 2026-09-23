@@ -11,7 +11,7 @@ and its easier handling compared to other ones. To simulate the robot we first n
 </p>
 <h2>The robots specifications</h2>
 <p>
-The base is: 8cm x 8cm x 2cm<br>
+The base is: 16cm x 16cm x 4cm<br>
 Mass of the base body: 550g<br>
 The legs are placed or the diagonals of the bottom of the base and extend from there<br>
 The upper legs are: 7.5cm long<br>
@@ -61,16 +61,36 @@ Penalty for actuator force<br>
 Penalties for having changing actions for both velocity and acceleration<br>
 <br>
 Problems and possible solutions with each version:<br>
-v0 - unstable shaky moving without clear direction and constant stumbling over
+<p>
+v0 - unstable shaky moving without clear direction and constant stumbling over<br>
 -> implement the yaw penalty, disabling the height penalty and adding the belly 
 and head penalty instead, increasing rotational velocity penalty weight as well as rotational position weight<br>
-v1 - no real meassureable foreward velocity due to wrong speed goal updating -> added some plot logging and higher velocity
+v1 - no real meassureable foreward velocity due to wrong speed goal updating
+-> added some plot logging and higher velocity<br>
 reward weight<br>
-v2 - robot has no idea how fast it is going or how fast it has to go -> added last action and speed goal to the observation<br>
-v3 - speed gain wasnt achieved rather stability with small movement was better -> changed the velocity reward and speed goal update rule<br>
-v4 - still issues with velocity not increasing -> changing vel reward to scale with velocity instead of goal speed and slighty increasing
+v2 - robot has no idea how fast it is going or how fast it has to go<br>
+-> added last action and speed goal to the observation<br>
+v3 - relevant speed gain wasnt achieved rather stability increased with small movement<br>
+-> changed the velocity reward and speed goal update rule<br>
+v4 - still issues with velocity not increasing <br>
+-> changing vel reward to scale with velocity instead of goal speed and slighty increasing
 rotational penalty weights<br>
-v5 - unstable walking resulting in abrupt small stops between steps and occasional falling over -> 
-increasing rotational velocity penalty weight and rotational position penalty weight<br>
-v6 - walking in circles and still small unstabilities -> connect the penalty weights for stability with foreward velocity to emphasize stability when walking fast
-</p>
+v5 - unstable walking resulting in abrupt small stops between steps and occasional falling over<br>
+-> increasing rotational velocity penalty weight and rotational position penalty weight<br>
+v6 - walking in circles and still small unstabilities<br>
+-> connect the penalty weights for stability with foreward velocity to emphasize stability when walking fast
+<br>
+v7 - still walking in circles but more stables at around 0.7m/s<br>
+&nbsp;&nbsp;&nbsp;- Code Changes to v7:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The velocity tracked now is not the velocity from the body frame but the world frame rotated to the desired yaw direction<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A small starting help was added in form of the velocity in the bodies direction<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A large part of the reward consists of if the base is oriented in the right direction and not just running into the direction<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The error from the yaw to the goal orientation was added into the observation<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The reset of the mujoco was fixed as the older version kept information from previous episodes like rotation<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The logging has been expanded to all almost all penalty and reward terms and changed to a pandas dataframe<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A new termination possibility by touching the floor with the belly has been added as test runs had the problem that the robot would catch the front edge of the base and stumble or fall over after initial progress<br>
+&nbsp;&nbsp;&nbsp;- Results from the changes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The Robot closely now tracks the desired direction with a speed up to 1.2 m/s with rarely falling over<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;It still needs a bit longer to reach max speed as the average as to increase first to increase the reward<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sometimes it somewhat stumbles a bit and has to catch itself first which results in a bit of offset in yaw and temporare increase in rotational velocity<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Better insights from the plots by using the episode average instead of the data from each step<br>
