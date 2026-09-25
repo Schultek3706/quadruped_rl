@@ -1,8 +1,8 @@
 <h1>quadruped-rl</h1>
 <h2>Goal</h2>
 <p>
-The goal of this proejct is to build a quadruped robot for a simulated environment and training it to walk by using reinforcement learning.
-In the process i will log my progress and various training metrics for an analysis of the training and the end-result.
+The goal of this project is to build a quadruped robot for a simulated environment and training it to walk by using reinforcement learning.
+While doing the project i will log my progress and various training metrics for an analysis of the training and the end-result.
 </p>
 <h2>The Robot</h2>
 <p>
@@ -91,6 +91,10 @@ v7 - still walking in circles but more stables at around 0.7m/s<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A new termination possibility by touching the floor with the belly has been added as test runs had the problem that the robot would catch the front edge of the base and stumble or fall over after initial progress<br>
 &nbsp;&nbsp;&nbsp;- Results from the changes:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The Robot closely now tracks the desired direction with a speed up to 1.2 m/s with rarely falling over<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;It still needs a bit longer to reach max speed as the average as to increase first to increase the reward<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sometimes it somewhat stumbles a bit and has to catch itself first which results in a bit of offset in yaw and temporare increase in rotational velocity<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Better insights from the plots by using the episode average instead of the data from each step<br>
+v8 - still a little bit unsteady and recoveries aren't "instant"<br>
+-> increased the number of training steps from 2.5 mil to 5 mil and added learning rate decay as well as callbacks in case of degradation<br>
+-> Results: speed up to 1.45 m/s with high kicking front legs and a bit faster recoveries<br>
+v9 - actuator data is not matching ones that could be used for hobby projects irl<br>
+-> change the specifications of the actuators to match Waveshare ST3215-HS servos as the current gait utilizes the maximum capacities of the actuators<br>
