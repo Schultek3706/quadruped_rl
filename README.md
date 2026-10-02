@@ -96,5 +96,16 @@ v7 - still walking in circles but more stables at around 0.7m/s<br>
 v8 - still a little bit unsteady and recoveries aren't "instant"<br>
 -> increased the number of training steps from 2.5 mil to 5 mil and added learning rate decay as well as callbacks in case of degradation<br>
 -> Results: speed up to 1.45 m/s with high kicking front legs and a bit faster recoveries<br>
-v9 - actuator data is not matching ones that could be used for hobby projects irl<br>
+v9 - actuator data is not matching ones that could be used for hobby projects<br>
 -> change the specifications of the actuators to match Waveshare ST3215-HS servos as the current gait utilizes the maximum capacities of the actuators<br>
+-occuring problems:<br>
+-> due to the lower actuator force the robot used one knee on the ground or small "falls" to stablelize itself<br>
+-> the knee problem could be fixed by adding a knee touch penalty<br>
+-> the resulting stuttering or falling was improved by adding a acceleration penalty<br>
+- other changes include:<br>
+-> adding knee sensors to the robot<br>
+-> changing the joint range and decreased the force of the actuators<br>
+- Results:
+-> v9 can walk stable now with a smooth continious gait<br>
+-> the bot can now walk up to around 1 m/s with closely tracking a set yaw<br>
+
