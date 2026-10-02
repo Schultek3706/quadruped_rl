@@ -44,6 +44,10 @@ class DataHandler:
         head_touch_ad = model.sensor_adr[head_touch_id]
         self.head_touch_adr = head_touch_ad
 
+        knee_touch_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SENSOR, "knee1_touch")
+        knee_touch_ad = model.sensor_adr[knee_touch_id]
+        self.knee_touch_adr = np.arange(knee_touch_ad,knee_touch_ad + 4)
+
         self.num_ac = model.nu
         act_of = {int(model.actuator_trnid[a, 0]): a for a in range(model.nu)}
         try:
@@ -107,13 +111,14 @@ class DataHandler:
 
         base_touch = data.sensordata[self.base_touch_adr].copy()
         head_touch = data.sensordata[self.head_touch_adr].copy()
+        knee_touch = data.sensordata[self.knee_touch_adr].copy()
 
         R = data.xmat[self.base_id].reshape(3,3)
         v_world = R @ v_base
         yaw = self.calc_yaw(R)
 
         ac_force = data.actuator_force.copy()
-        return v_world, grav, height, servo_pos, servo_vel, rot_vel, ac_force,base_touch, head_touch, yaw
+        return v_world, grav, height, servo_pos, servo_vel, rot_vel, ac_force,base_touch, head_touch, yaw,knee_touch
     @staticmethod
     def projected_gravity(quat):
         conj = np.zeros(4)

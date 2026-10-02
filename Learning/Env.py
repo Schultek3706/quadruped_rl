@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 class RunClass(gym.Env):
-    def __init__(self, robot_path, seed = None):
+    def __init__(self, robot_path, seed = None,ep_c:int = 0, total_step:int = 0):
         super().__init__()
         here = Path(__file__).resolve().parent
         project_root = here.parent
@@ -15,7 +15,7 @@ class RunClass(gym.Env):
         self.model = mujoco.MjModel.from_xml_path(str(xml))
         self.data = mujoco.MjData(self.model)
         frames_stacked = 30
-        self.observation_space = gym.spaces.Box(low = -10*np.ones((44*frames_stacked,)),high = 10*np.ones((44*frames_stacked,)),shape = (44*frames_stacked,),dtype=np.float32)
+        self.observation_space = gym.spaces.Box(low = -10*np.ones((44*frames_stacked,)),high = 10*np.ones((44*frames_stacked,)),shape = (44*frames_stacked,))
         self.obs = np.ones(44*frames_stacked)
         self.action_space = gym.spaces.Box(low=-3*np.ones(12),high=3*np.ones(12),shape = (12,))
         self.orientation = np.ones(50) #1 second
@@ -26,6 +26,7 @@ class RunClass(gym.Env):
         self.last_action = np.ones(12)
         self.last_action2 = np.ones(12)
         self.last_servo_vel = np.ones(12)
+        self.last_v_world = np.zeros(3)
         self.avg_speed = 0
         self.avg_reward = 0
         self.max_reward = 0
@@ -34,13 +35,14 @@ class RunClass(gym.Env):
 
         self.rng = np.random.default_rng(self.seed)
         self.handler = DataHandler(self.model,self.seed)
-        self.ep_c = 0
+        self.ep_c = ep_c
         self.ep_total = 1000
         self.episode_step = 0
+        self.total_step = total_step
 
         self.cols = ["vel_reward", "base_rew", "yaw_reward", "align_reward","pen_vel", "touch_pen",
                      "pen_rot_vel", "pen_grav", "pen_servo_pos", "pen_servo_vel",
-                     "pen_force", "pen_ac", "pen_ac_acc","pen_action"]
+                     "pen_force", "pen_ac", "pen_ac_acc","pen_action","pen_track","pen_body_acc"]
         self.log = pd.DataFrame(columns=self.cols)
         self.ep_log = np.zeros((len(self.cols)))
         self.gen_metrics = {"avg_speed": np.array([]), "avg_reward": np.array([]), "max_reward": np.array([]),"speed_goal":np.array([])}
@@ -81,6 +83,7 @@ class RunClass(gym.Env):
         self.avg_reward = 0
         self.ep_log = np.zeros((len(self.cols)))
         self.last_servo_vel = reward_data[4]
+        self.last_v_world = self.handler.reward_data(self.data)[0].copy()
         info = {"speed": reward_data[0][0], "gravity_down": reward_data[1][2]}
         return self.obs.copy(), info
     def step(self, action): # 50hz control loop
@@ -109,7 +112,7 @@ class RunClass(gym.Env):
         info = {"speed": reward_data[0][0],"gravity_down": reward_data[1][2]}
         self.last_action2 = self.last_action.copy()
         self.last_action = action
-        self.episode_step += 1
+
         if np.all(self.orientation == False) or np.all(self.touchdown == False):
             terminated = True
             if self.avg_reward > self.max_reward - 0.1 and self.episode_step > 30*50 and self.avg_speed > self.speed_goal - 0.025:
@@ -129,21 +132,26 @@ class RunClass(gym.Env):
             truncated = False
         reward *= 0.002
         reward = np.clip(reward,0,None)
+        self.episode_step += 1
+        self.total_step += 1
         return self.obs.copy(), reward, terminated, truncated, info
     def reward(self,reward_data,action,s):
-        v_world, grav, height, servo_pos, servo_vel, rot_vel, ac_force,base_touch, head_touch, yaw = reward_data
+        v_world, grav, height, servo_pos, servo_vel, rot_vel, ac_force,base_touch, head_touch, yaw, knee_touch = reward_data
         base_pose =np.array([0, 0.6, -1.1, 0, 0.6, -1.1, 0, 0.6, -1.1, 0, 0.6, -1.1])
-
+        servo_goal = self.handler.set_servos(np.clip(action,-1,1))
+        k = min(self.total_step/100_000,1.0)
         temp_rews = {}
 
         yaw_tri = [np.cos(self.yaw_base),np.sin(self.yaw_base)]
         vel_fwd = yaw_tri[0]*v_world[0] + yaw_tri[1]*v_world[1]
         vel_lat = -yaw_tri[1]*v_world[0] + yaw_tri[0]*v_world[1]
+        acc = (v_world - self.last_v_world) / 0.02
 
         yaw_foreward = [np.cos(yaw),np.sin(yaw)]
         v_base = yaw_foreward[0]*v_world[0] + yaw_foreward[1]*v_world[1]
 
         SIGMA = 0.25
+        SIGMA_YAW = 0.1
         err = self.limit_angle(yaw - self.yaw_base)
         self.avg_speed = (self.avg_speed*self.episode_step + vel_fwd)/(self.episode_step + 1)
 
@@ -156,23 +164,27 @@ class RunClass(gym.Env):
 
         head_touch = -head_touch*1
         base_touch = -base_touch*1
-        temp_rews["touch_pen"] = head_touch + base_touch
+        knee_touch = -np.sum(knee_touch)*1
+        temp_rews["touch_pen"] = head_touch + base_touch + knee_touch
         temp_rews["pen_vel"] = -0.05*(vel_lat**2 + v_world[2]**2)
-        temp_rews["pen_rot_vel"] = -0.002 * (rot_vel[0] ** 2 + 2*rot_vel[1] ** 2 + 4*rot_vel[2]**2)
+        temp_rews["pen_rot_vel"] = -0.002 * (2*rot_vel[0] ** 2 + 3*rot_vel[1] ** 2 + 4*rot_vel[2]**2)
         temp_rews["pen_grav"] = -0.5 * (grav[0] ** 2 + grav[1] ** 2)
 
         ac_vel = action - self.last_action
         ac_acc = action - 2 * self.last_action + self.last_action2
         temp_rews["pen_servo_pos"] = -0.001 * np.sum((base_pose - servo_pos) ** 2)
-        temp_rews["pen_servo_vel"] = -2e-4*np.sum(servo_vel ** 2)/(40*temp_rews["base_rew"])
-        temp_rews["pen_force"] = -2e-4*np.sum((ac_force ** 2))
-        temp_rews["pen_ac"] = -0.001*np.sum((ac_vel) ** 2)
-        temp_rews["pen_ac_acc"] = -0.001*np.sum((ac_acc) ** 2)
+        temp_rews["pen_servo_vel"] = -2e-4*np.sum(servo_vel ** 2)/(40*temp_rews["base_rew"])*k
+        temp_rews["pen_force"] = -0.01*np.sum((ac_force/0.65)**2)*k
+        temp_rews["pen_ac"] = -0.1*np.sum((ac_vel) ** 2)*k
+        temp_rews["pen_ac_acc"] = -0.01*np.sum((ac_acc) ** 2)*k
         temp_rews["pen_action"] = -2*np.sum(np.maximum(np.abs(action) - 1.0, 0.0) ** 2)
+        temp_rews["pen_track"] = -0.02 * np.sum((servo_goal - servo_pos) ** 2)*k
+        temp_rews["pen_body_acc"] = -0.005 * (acc[0] ** 2 + acc[1] ** 2 + 0.5 * acc[2] ** 2) * k
 
         rew_list = [temp_rews[terms] for terms in self.cols]
         total_reward = sum(rew_list) + alive_reward
         #print("total_reward",total_reward)
+        self.last_v_world = v_world.copy()
         self.ep_log = (self.ep_log * self.episode_step + rew_list) / (self.episode_step + 1)
         return total_reward
 

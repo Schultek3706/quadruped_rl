@@ -1,17 +1,30 @@
 import torch.nn
-from OpenGL.raw.GL.SGIX import flush_raster
 from stable_baselines3 import PPO
 from Env import RunClass
-import mujoco
 import time
 import mujoco.viewer
 from stable_baselines3.common.env_util import make_vec_env
-from gymnasium.envs.registration import register
+from stable_baselines3.common.callbacks import CheckpointCallback
+
+from typing import Callable
+
+def linear_schedule(initial: float) -> Callable[[float], float]:
+    def func(progress_remaining: float) -> float:
+        return 5e-5+progress_remaining*(initial - 5e-5)
+    return func
+checkpoint_callback = CheckpointCallback(
+    save_freq= 7500,
+    save_path="./checkpoints/",
+    name_prefix="walker_",
+    save_replay_buffer=True,
+    save_vecnormalize=True
+)
+
 policy_kwargs = dict(
     n_steps=1024,            # x 32 Envs = 32768 Samples pro Update
     batch_size=8192,
     n_epochs=5,
-    learning_rate=3e-4,      # optional: lineare Schedule auf 1e-5
+    learning_rate=linear_schedule(3e-4),      # optional: lineare Schedule auf 1e-5
     gamma=0.99,
     gae_lambda=0.95,
     clip_range=0.2,
@@ -28,8 +41,8 @@ policy_kwargs = dict(
 )
 env = make_vec_env(RunClass, n_envs=8, seed=42,env_kwargs={"robot_path": "robot.xml"})
 model = PPO("MlpPolicy",env,verbose=1,device="cpu",**policy_kwargs)
-model.learn(total_timesteps=2500000)
-model.save("PPO_v7")
+model.learn(total_timesteps=7500000,callback=checkpoint_callback)
+model.save("walker_v9")
 eval_env = RunClass(seed=41,robot_path ="robot.xml")
 while True:
     with mujoco.viewer.launch_passive(eval_env.model, eval_env.data) as viewer:
