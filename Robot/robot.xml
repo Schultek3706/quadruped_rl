@@ -3,7 +3,7 @@
     <option timestep="0.002" gravity="0 0 -9.81" integrator="implicitfast"/>
     <default>
         <joint damping="0.18" armature="0.005" frictionloss="0.05"/>
-        <geom friction="0.8 0.005 0.0001" condim="3"/>
+        <geom friction="0.8 0.005 0.0001" condim="3" solref="0.005 1"/>
     </default>
     <worldbody>
         <geom name="floor" type="plane" size="0 0 0.05" friction="0.8 0.005 0.0001"/>
@@ -23,12 +23,12 @@
                     <geom type="box" size="0.02 0.01 0.02" mass="0.068" contype="0" conaffinity="0"/>
                     <body name="foot_1" pos="0 0.095 0" euler = "-1.309 0 0">
                         <joint name="ankle_1" type="hinge" axis="1 0 0" range="-1.6 1.6"/>
-                        <geom name="foot_1_geom" type="capsule" fromto="0 0 0 0 0.125 0" size="0.015" density="1250"/>
+                        <geom name="foot1_geom" type="capsule" fromto="0 0 0 0 0.125 0" size="0.015" density="1250"/>
                         <geom type="box" size="0.02 0.01 0.02" mass="0.068" contype="0" conaffinity="0"/>
                         <geom name="knee_box_1" type = "sphere" size = "0.018" mass = "0.001"/>
-                        <geom name="pad1" type="sphere" size="0.016" pos="0 0.125 0" mass="0.005"
+                        <geom name="foot_pad1" type="sphere" size="0.016" pos="0 0.125 0" mass="0.005"
                             friction="1.0 0.01 0.0001" condim="3"/>
-                        <site name="foot_1_site" pos="0 0.125 0" size="0.016"/>
+                        <site name="foot_site1" pos="0 0.125 0" size="0.005"/>
                     </body>
                 </body>
             </body>
@@ -42,12 +42,12 @@
                     <geom type="box" size="0.02 0.01 0.02" mass="0.068" contype="0" conaffinity="0"/>
                     <body name="foot_2" pos="0 0.095 0" euler = "-1.309 0 0">
                         <joint name="ankle_2" type="hinge" axis="1 0 0" range="-1.6 1.6"/>
-                        <geom name="foot_2_geom" type="capsule" fromto="0 0 0 0 0.125 0" size="0.015" density="1250"/>
+                        <geom name="foot2_geom" type="capsule" fromto="0 0 0 0 0.125 0" size="0.015" density="1250"/>
                         <geom type="box" size="0.02 0.01 0.02" mass="0.068" contype="0" conaffinity="0"/>
                         <geom name="knee_box_2" type = "sphere" size = "0.018" mass = "0.001"/>
-                        <geom name="pad2" type="sphere" size="0.016" pos="0 0.125 0" mass="0.005"
+                        <geom name="foot_pad2" type="sphere" size="0.016" pos="0 0.125 0" mass="0.005"
                             friction="1.0 0.01 0.0001" condim="3"/>
-                        <site name="foot_2_site" pos="0 0.125 0" size="0.016"/>
+                        <site name="foot_site2" pos="0 0.125 0" size="0.005"/>
                     </body>
                 </body>
             </body>
@@ -61,12 +61,12 @@
                     <geom type="box" size="0.02 0.01 0.02" mass="0.068" contype="0" conaffinity="0"/>
                     <body name="foot_3" pos="0 0.095 0" euler = "-1.309 0 0">
                         <joint name="ankle_3" type="hinge" axis="1 0 0" range="-1.6 1.6"/>
-                        <geom name="foot_3_geom" type="capsule" fromto="0 0 0 0 0.125 0" size="0.015" density="1250"/>
+                        <geom name="foot3_geom" type="capsule" fromto="0 0 0 0 0.125 0" size="0.015" density="1250"/>
                         <geom type="box" size="0.02 0.01 0.02" mass="0.068" contype="0" conaffinity="0"/>
                         <geom name="knee_box_3" type = "sphere" size = "0.018" mass = "0.001"/>
-                        <geom name="pad3" type="sphere" size="0.016" pos="0 0.125 0" mass="0.005"
+                        <geom name="foot_pad3" type="sphere" size="0.016" pos="0 0.125 0" mass="0.005"
                             friction="1.0 0.01 0.0001" condim="3"/>
-                        <site name="foot_3_site" pos="0 0.125 0" size="0.016"/>
+                        <site name="foot_site3" pos="0 0.125 0" size="0.005"/>
                     </body>
                 </body>
             </body>
@@ -80,12 +80,12 @@
                     <geom type="box" size="0.02 0.01 0.02" mass="0.068" contype="0" conaffinity="0"/>
                     <body name="foot_4" pos="0 0.095 0" euler = "-1.309 0 0">
                         <joint name="ankle_4" type="hinge" axis="1 0 0" range="-1.6 1.6"/>
-                        <geom name="foot_4_geom" type="capsule" fromto="0 0 0 0 0.125 0" size="0.015" density="1250"/>
+                        <geom name="foot4_geom" type="capsule" fromto="0 0 0 0 0.125 0" size="0.015" density="1250"/>
                         <geom type="box" size="0.02 0.01 0.02" mass="0.068" contype="0" conaffinity="0"/>
                         <geom name="knee_box_4" type = "sphere" size = "0.018" mass = "0.001"/>
-                        <geom name="pad4" type="sphere" size="0.016" pos="0 0.125 0" mass="0.005"
+                        <geom name="foot_pad4" type="sphere" size="0.016" pos="0 0.125 0" mass="0.005"
                             friction="1.0 0.01 0.0001" condim="3"/>
-                        <site name="foot_4_site" pos="0 0.125 0" size="0.016"/>
+                        <site name="foot_site4" pos="0 0.125 0" size="0.005"/>
                     </body>
                 </body>
             </body>
@@ -147,9 +147,15 @@
         <contact name= "knee2_touch" geom1 = "knee_box_2" geom2 = "floor"/>
         <contact name= "knee3_touch" geom1 = "knee_box_3" geom2 = "floor"/>
         <contact name= "knee4_touch" geom1 = "knee_box_4" geom2 = "floor"/>
-        <touch name="foot_1_touch" site="foot_1_site"/>
-        <touch name="foot_2_touch" site="foot_2_site"/>
-        <touch name="foot_3_touch" site="foot_3_site"/>
-        <touch name="foot_4_touch" site="foot_4_site"/>
+
+        <contact name="foot1_touch" geom1="foot_pad1"/>
+        <contact name="foot2_touch" geom1="foot_pad2"/>
+        <contact name="foot3_touch" geom1="foot_pad3"/>
+        <contact name="foot4_touch" geom1="foot_pad4"/>
+
+        <framelinvel name="foot1_vel" objtype="site" objname="foot_site1"/>
+        <framelinvel name="foot2_vel" objtype="site" objname="foot_site2"/>
+        <framelinvel name="foot3_vel" objtype="site" objname="foot_site3"/>
+        <framelinvel name="foot4_vel" objtype="site" objname="foot_site4"/>
     </sensor>
 </mujoco>
