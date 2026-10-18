@@ -48,6 +48,32 @@ class DataHandler:
         knee_touch_ad = model.sensor_adr[knee_touch_id]
         self.knee_touch_adr = np.arange(knee_touch_ad,knee_touch_ad + 4)
 
+        self.foot1_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_GEOM, "foot_pad1")
+        self.foot2_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_GEOM, "foot_pad2")
+        self.foot3_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_GEOM, "foot_pad3")
+        self.foot4_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_GEOM, "foot_pad4")
+
+        foot_touch_id = mujoco.mj_name2id(model,mujoco.mjtObj.mjOBJ_SENSOR,"foot1_touch")
+        foot_touch_ad = model.sensor_adr[foot_touch_id]
+        self.foot_touch_adr = np.arange(foot_touch_ad, foot_touch_ad + 4)
+
+        foot_vel_id = mujoco.mj_name2id(model,mujoco.mjtObj.mjOBJ_SENSOR, "foot1_vel")
+        foot_vel_ad = model.sensor_adr[foot_vel_id]
+        foot1_vel_adr = np.arange(foot_vel_ad, foot_vel_ad + 3)
+
+        foot_vel_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SENSOR, "foot2_vel")
+        foot_vel_ad = model.sensor_adr[foot_vel_id]
+        foot2_vel_adr = np.arange(foot_vel_ad, foot_vel_ad + 3)
+
+        foot_vel_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SENSOR, "foot3_vel")
+        foot_vel_ad = model.sensor_adr[foot_vel_id]
+        foot3_vel_adr = np.arange(foot_vel_ad, foot_vel_ad + 3)
+
+        foot_vel_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SENSOR, "foot4_vel")
+        foot_vel_ad = model.sensor_adr[foot_vel_id]
+        foot4_vel_adr = np.arange(foot_vel_ad, foot_vel_ad + 3)
+        self.feet_vel_adr = np.array([foot1_vel_adr,foot2_vel_adr,foot3_vel_adr,foot4_vel_adr])
+
         self.num_ac = model.nu
         act_of = {int(model.actuator_trnid[a, 0]): a for a in range(model.nu)}
         try:
@@ -58,6 +84,9 @@ class DataHandler:
         cr = model.actuator_ctrlrange[self.ctrl_idx]
         self.ctrl_lo, self.ctrl_hi = cr[:, 0].copy(), cr[:, 1].copy()
         self.ctrl_half = (self.ctrl_hi - self.ctrl_lo) / 2
+
+        self.kp = -model.actuator_biasprm[:,1].copy()
+        self.kv = -model.actuator_biasprm[:,2].copy()
 
         self.nominal = {
             "body_mass": model.body_mass.copy(),
@@ -98,7 +127,7 @@ class DataHandler:
         yaw = self.yaw_from_quat(quat)
 
         return np.concat((servo_pos, 0.1*servo_vel, grav, 0.25*gyro,np.array([yaw])))
-    def reward_data(self,data):
+    def reward_data(self,model,data,action,max_speeds):
 
         v_base = data.sensordata[self.lin_vel_adr].copy()
         rot_vel = data.sensordata[self.gyro_adr].copy()
@@ -118,7 +147,45 @@ class DataHandler:
         yaw = self.calc_yaw(R)
 
         ac_force = data.actuator_force.copy()
-        return v_world, grav, height, servo_pos, servo_vel, rot_vel, ac_force,base_touch, head_touch, yaw,knee_touch
+        acf_overflow = np.sum(self.force_of(data,model,action))
+
+        feet_data = self.feet_data(data,model)
+        feet_vel = feet_data[2]
+        vel_vert = feet_data[3]
+        feet_height = feet_data[1]
+        return v_world, grav, height, servo_pos, servo_vel, rot_vel, ac_force,base_touch, head_touch, yaw,knee_touch,acf_overflow, feet_height, feet_vel, vel_vert,max_speeds
+    def feet_data(self,data,model):
+        sd = data.sensordata.copy()
+        foot_touches = sd[self.foot_touch_adr]
+        feet_vel = sd[self.feet_vel_adr]
+        vel_foot = feet_vel[:,:-1]
+        vel_foot = np.linalg.norm(vel_foot,axis=1)
+        vel_vert = feet_vel[:,2]
+
+        height1 = data.geom_xpos[self.foot1_id][2] - 0.016
+        height2 = data.geom_xpos[self.foot2_id][2] - 0.016
+        height3 = data.geom_xpos[self.foot3_id][2] - 0.016
+        height4 = data.geom_xpos[self.foot4_id][2] - 0.016
+
+        height_foot = [height1, height2, height3, height4]
+        return foot_touches,height_foot, vel_foot,vel_vert
+    def sub_step(self,model,data,n_steps):
+        max_speeds = np.zeros((4,))
+        for i in range(n_steps):
+            mujoco.mj_step(model,data,1)
+            feet_vel = data.sensordata[self.feet_vel_adr].copy()
+            vel_vert = feet_vel[:, 2]
+            max_speeds = np.minimum(max_speeds,vel_vert)
+        return max_speeds
+    def force_of(self,data,model,action):
+        d_pos = self.set_servos(action)
+        servo_pos = data.sensordata[self.sensor_pos_adr].copy()
+        servo_vel = data.sensordata[self.sensor_vel_adr].copy()
+
+        d_ac_force = self.kp*(d_pos - servo_pos) - self.kv*servo_vel
+        diff_force = np.abs(d_ac_force) - model.actuator_forcerange[:,1]
+        diff_force = np.where(diff_force>0,diff_force,0)
+        return diff_force
     @staticmethod
     def projected_gravity(quat):
         conj = np.zeros(4)
@@ -156,7 +223,7 @@ class DataHandler:
 
         f = 1.0+s*self.rng.uniform(0,self.world_noise["infill_mass"],model.nbody)
         f[0] = 0.0
-        f[self.base_id] = 1.0+s*self.rng.uniform(self.world_noise["base_mass"],self.world_noise["base_mass"])
+        f[self.base_id] = 1.0+s*self.rng.uniform(-self.world_noise["base_mass"],self.world_noise["base_mass"])
         model.body_mass[:] = self.nominal["body_mass"] * f
         model.body_inertia[:] = self.nominal["body_inertia"] * f[:, None]
 
