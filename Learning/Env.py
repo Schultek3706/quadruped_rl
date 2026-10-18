@@ -13,6 +13,7 @@ class RunClass(gym.Env):
         project_root = here.parent
         xml = project_root / "Robot" / robot_path
         self.model = mujoco.MjModel.from_xml_path(str(xml))
+
         self.data = mujoco.MjData(self.model)
         frames_stacked = 30
         self.observation_space = gym.spaces.Box(low = -10*np.ones((44*frames_stacked,)),high = 10*np.ones((44*frames_stacked,)),shape = (44*frames_stacked,))
@@ -36,13 +37,13 @@ class RunClass(gym.Env):
         self.rng = np.random.default_rng(self.seed)
         self.handler = DataHandler(self.model,self.seed)
         self.ep_c = ep_c
-        self.ep_total = 1000
+        self.ramp_step = 5000000/8
         self.episode_step = 0
         self.total_step = total_step
 
         self.cols = ["vel_reward", "base_rew", "yaw_reward", "align_reward","pen_vel", "touch_pen",
                      "pen_rot_vel", "pen_grav", "pen_servo_pos", "pen_servo_vel",
-                     "pen_force", "pen_ac", "pen_ac_acc","pen_action","pen_track","pen_body_acc"]
+                     "pen_force", "pen_ac", "pen_ac_acc","pen_action","pen_track","pen_body_acc","pen_force_ac", "pen_sliding","pen_slam"]
         self.log = pd.DataFrame(columns=self.cols)
         self.ep_log = np.zeros((len(self.cols)))
         self.gen_metrics = {"avg_speed": np.array([]), "avg_reward": np.array([]), "max_reward": np.array([]),"speed_goal":np.array([])}
@@ -54,7 +55,8 @@ class RunClass(gym.Env):
             self.rng = np.random.default_rng(self.seed)
             self.handler = DataHandler(self.model, self.seed)
 
-        s = self.ep_c / self.ep_total
+        s = self.total_step / self.ramp_step
+        s = np.clip(s, 0, 1)
         self.model, self.data = self.handler.reset_world_random(self.model,self.data,s)
         self.ep_c += 1
         self.yaw_base = self.rng.uniform(-0.3, 0.3)
@@ -65,7 +67,8 @@ class RunClass(gym.Env):
             self.last_action = servo_pos
             goal_pos = servo_pos + s*self.rng.uniform(-0.02,0.02,servo_pos.shape)
             self.data.ctrl[:] = goal_pos
-            mujoco.mj_step(self.model, self.data, 10)
+            max_speeds = self.handler.sub_step(self.model,self.data,10)
+            #mujoco.mj_step(self.model, self.data, 10)
             obs = self.handler.get_obs(self.data,s)
             yaw = obs[-1].copy()
             obs = np.append(obs[:-1],1)
@@ -74,7 +77,7 @@ class RunClass(gym.Env):
             obs = np.append(obs, err)
             self.obs = np.append(self.obs, obs)
             self.obs = np.delete(self.obs, np.s_[0:44])
-        reward_data = self.handler.reward_data(self.data)
+        reward_data = self.handler.reward_data(self.model,self.data,goal_pos,max_speeds)
         self.orientation = np.ones(50)  # 1 seconds
         self.orientation = self.orientation.astype(bool)
         self.touchdown = np.ones(3)
@@ -83,20 +86,22 @@ class RunClass(gym.Env):
         self.avg_reward = 0
         self.ep_log = np.zeros((len(self.cols)))
         self.last_servo_vel = reward_data[4]
-        self.last_v_world = self.handler.reward_data(self.data)[0].copy()
+        self.last_v_world = reward_data[0].copy()
         info = {"speed": reward_data[0][0], "gravity_down": reward_data[1][2]}
         return self.obs.copy(), info
     def step(self, action): # 50hz control loop
-        s = self.ep_c/self.ep_total
+        s = self.total_step/self.ramp_step
         s = np.clip(s,0,1)
+        ac_clipped = np.clip(action,-1,1)
 
-        servo_goal = self.handler.set_servos(np.clip(action,-1,1))
+        servo_goal = self.handler.set_servos(ac_clipped)
         self.data.ctrl[:] = servo_goal
-        mujoco.mj_step(self.model,self.data,10)
+        max_speed = self.handler.sub_step(self.model,self.data,10)
+
         obs_data = self.handler.get_obs(self.data,s)
         yaw = obs_data[-1].copy()
         err = self.limit_angle(yaw-self.yaw_base)
-        reward_data = self.handler.reward_data(self.data)
+        reward_data = self.handler.reward_data(self.model,self.data,ac_clipped,max_speed)
 
         self.orientation = np.append(self.orientation,reward_data[1][2] < 0)[1:]
         self.touchdown = np.append(self.touchdown,reward_data[7] == 0)[1:]
@@ -136,10 +141,10 @@ class RunClass(gym.Env):
         self.total_step += 1
         return self.obs.copy(), reward, terminated, truncated, info
     def reward(self,reward_data,action,s):
-        v_world, grav, height, servo_pos, servo_vel, rot_vel, ac_force,base_touch, head_touch, yaw, knee_touch = reward_data
+        v_world, grav, height, servo_pos, servo_vel, rot_vel, ac_force,base_touch, head_touch, yaw, knee_touch,force_over, feet_height, feet_vel, vel_vert,max_speeds = reward_data
         base_pose =np.array([0, 0.6, -1.1, 0, 0.6, -1.1, 0, 0.6, -1.1, 0, 0.6, -1.1])
         servo_goal = self.handler.set_servos(np.clip(action,-1,1))
-        k = min(self.total_step/100_000,1.0)
+        k = min(self.total_step/150_000,1.0)
         temp_rews = {}
 
         yaw_tri = [np.cos(self.yaw_base),np.sin(self.yaw_base)]
@@ -174,12 +179,18 @@ class RunClass(gym.Env):
         ac_acc = action - 2 * self.last_action + self.last_action2
         temp_rews["pen_servo_pos"] = -0.001 * np.sum((base_pose - servo_pos) ** 2)
         temp_rews["pen_servo_vel"] = -2e-4*np.sum(servo_vel ** 2)/(40*temp_rews["base_rew"])*k
-        temp_rews["pen_force"] = -0.01*np.sum((ac_force/0.65)**2)*k
+        temp_rews["pen_force"] = -0.004*np.sum((ac_force/0.65)**2)*k
         temp_rews["pen_ac"] = -0.1*np.sum((ac_vel) ** 2)*k
         temp_rews["pen_ac_acc"] = -0.01*np.sum((ac_acc) ** 2)*k
         temp_rews["pen_action"] = -2*np.sum(np.maximum(np.abs(action) - 1.0, 0.0) ** 2)
         temp_rews["pen_track"] = -0.02 * np.sum((servo_goal - servo_pos) ** 2)*k
         temp_rews["pen_body_acc"] = -0.005 * (acc[0] ** 2 + acc[1] ** 2 + 0.5 * acc[2] ** 2) * k
+        temp_rews["pen_force_ac"] = -force_over/1500*k
+
+        rel_feet_vel = np.where(np.array([feet_height])<0.0025,np.abs(feet_vel),0)
+        temp_rews["pen_sliding"] = -0.2*np.sum(rel_feet_vel)*k
+        feet_slam = np.where(max_speeds < 0, max_speeds, 0)**2
+        temp_rews["pen_slam"] = -0.3*np.sum(feet_slam)*k
 
         rew_list = [temp_rews[terms] for terms in self.cols]
         total_reward = sum(rew_list) + alive_reward
