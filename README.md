@@ -65,47 +65,73 @@ Problems and possible solutions with each version:<br>
 v0 - unstable shaky moving without clear direction and constant stumbling over<br>
 -> implement the yaw penalty, disabling the height penalty and adding the belly 
 and head penalty instead, increasing rotational velocity penalty weight as well as rotational position weight<br>
+<br>
 v1 - no real meassureable foreward velocity due to wrong speed goal updating
 -> added some plot logging and higher velocity<br>
 reward weight<br>
+<br>
 v2 - robot has no idea how fast it is going or how fast it has to go<br>
 -> added last action and speed goal to the observation<br>
+<br>
 v3 - relevant speed gain wasnt achieved rather stability increased with small movement<br>
 -> changed the velocity reward and speed goal update rule<br>
+<br>
 v4 - still issues with velocity not increasing <br>
 -> changing vel reward to scale with velocity instead of goal speed and slighty increasing
 rotational penalty weights<br>
+<br>
 v5 - unstable walking resulting in abrupt small stops between steps and occasional falling over<br>
 -> increasing rotational velocity penalty weight and rotational position penalty weight<br>
+<br>
 v6 - walking in circles and still small unstabilities<br>
 -> connect the penalty weights for stability with foreward velocity to emphasize stability when walking fast
 <br>
+<br>
 v7 - still walking in circles but more stables at around 0.7m/s<br>
-&nbsp;&nbsp;&nbsp;- Code Changes to v7:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The velocity tracked now is not the velocity from the body frame but the world frame rotated to the desired yaw direction<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A small starting help was added in form of the velocity in the bodies direction<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A large part of the reward consists of if the base is oriented in the right direction and not just running into the direction<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The error from the yaw to the goal orientation was added into the observation<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The reset of the mujoco was fixed as the older version kept information from previous episodes like rotation<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The logging has been expanded to all almost all penalty and reward terms and changed to a pandas dataframe<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A new termination possibility by touching the floor with the belly has been added as test runs had the problem that the robot would catch the front edge of the base and stumble or fall over after initial progress<br>
-&nbsp;&nbsp;&nbsp;- Results from the changes:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The Robot closely now tracks the desired direction with a speed up to 1.2 m/s with rarely falling over<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sometimes it somewhat stumbles a bit and has to catch itself first which results in a bit of offset in yaw and temporare increase in rotational velocity<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Better insights from the plots by using the episode average instead of the data from each step<br>
+- Changes:<br>
+-> The velocity tracked now is not the velocity from the body frame but the world frame rotated to the desired yaw direction<br>
+-> A small starting help was added in form of the velocity in the bodies direction<br>
+-> A large part of the reward consists of if the base is oriented in the right direction and not just running into the direction<br>
+-> The error from the yaw to the goal orientation was added into the observation<br>
+-> The reset of the mujoco was fixed as the older version kept information from previous episodes like rotation<br>
+-> The logging has been expanded to all almost all penalty and reward terms and changed to a pandas dataframe<br>
+-> A new termination possibility by touching the floor with the belly has been added as test runs had the problem that the robot would catch the front edge of the base and stumble or fall over after initial progress<br>
+- Results:<br>
+-> The Robot closely now tracks the desired direction with a speed up to 1.2 m/s with rarely falling over<br>
+-> Sometimes it somewhat stumbles a bit and has to catch itself first which results in a bit of offset in yaw and temporare increase in rotational velocity<br>
+-> Better insights from the plots by using the episode average instead of the data from each step<br>
+<br>
 v8 - still a little bit unsteady and recoveries aren't "instant"<br>
+- Changes:<br>
 -> increased the number of training steps from 2.5 mil to 5 mil and added learning rate decay as well as callbacks in case of degradation<br>
--> Results: speed up to 1.45 m/s with high kicking front legs and a bit faster recoveries<br>
+- Results:<br>
+-> speed up to 1.45 m/s with high kicking front legs and a bit faster recoveries<br>
+<br>
 v9 - actuator data is not matching ones that could be used for hobby projects<br>
 -> change the specifications of the actuators to match Waveshare ST3215-HS servos as the current gait utilizes the maximum capacities of the actuators<br>
--occuring problems:<br>
+- Occuring problems:<br>
 -> due to the lower actuator force the robot used one knee on the ground or small "falls" to stablelize itself<br>
 -> the knee problem could be fixed by adding a knee touch penalty<br>
 -> the resulting stuttering or falling was improved by adding a acceleration penalty<br>
-- other changes include:<br>
+- Other changes include:<br>
 -> adding knee sensors to the robot<br>
 -> changing the joint range and decreased the force of the actuators<br>
-- Results:
+- Results:<br>
 -> v9 can walk stable now with a smooth continious gait<br>
 -> the bot can now walk up to around 1 m/s with closely tracking a set yaw<br>
-
+<br>
+v10 - the analysis script shows that the robot demands higher torque most of the time and the high swings of the front legs results in slams into the ground<br>
+- Changes:<br>
+-> adding sensors on the feet and adding penalty terms for the slams and stiffening the floor<br>
+-> adding a penalty for demanding more torque than can be delivered<br>
+-> changed the env to track max vertical speed of the feet and divided the sim steps into substeps<br>
+-> changed the randomization ramp changed from episodes to steps and earlier max out<br>
+- occuring problems:<br>
+-> the analysis showed that the feet are also sliding a bit while having contact with the ground<br>
+-> the slams occur fast due to the high velocities therefore the simulation steps had to be split up without slowing down training<br>
+- Results:<br>
+-> the swing height of the front legs could be decreased to a certain degree<br>
+-> the sliding of the feet while standing could be decreased resulting in overall cleaner gait in the plots<br>
+-> the torque problem couldnt be fixed properly as the resulting speed reward is greater than the penalty from a higher torque<br>
+<br>
+v11 - the reward term has to be overworked to enforce the torque limits on the policies outputs<br>
