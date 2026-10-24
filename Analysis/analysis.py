@@ -7,7 +7,7 @@ import numpy as np
 from pathlib import Path
 from matplotlib import pyplot as plt
 
-current_model = "walker_v10"
+current_model = "walker_v11"
 here = Path(__file__).resolve().parent
 project_root = here.parent
 model_path = project_root / "Learning/models" / current_model
@@ -21,6 +21,7 @@ def data_collection(col_env,col_model):
     feet_touches = np.zeros((4,tp))
     feet_height = np.zeros((4,tp))
     feet_vel = np.zeros((4,tp))
+    vel_vert = np.zeros((4,tp))
     ac_des_force = np.zeros((12,tp))
     for i in range(50*10):
         action = col_model.predict(obs,deterministic=True)[0]
@@ -29,12 +30,14 @@ def data_collection(col_env,col_model):
     for i in range(tp):
         action = col_model.predict(obs,deterministic=True)[0]
         obs, reward, terminated, truncated, info = col_env.step(action)
-        feet_touches[:,i] = col_env.handler.feet_data(col_env.data,col_env.model)[0]
-        feet_height[:, i] = col_env.handler.feet_data(col_env.data,col_env.model)[1]
-        feet_vel[:, i] = col_env.handler.feet_data(col_env.data,col_env.model)[2]
+        feet_data = col_env.handler.feet_data(col_env.data,col_env.model)
+        feet_touches[:,i] = feet_data[0]
+        feet_height[:, i] = feet_data[1]
+        feet_vel[:, i] = feet_data[2]
+        vel_vert[:, i] = feet_data[3]
         ac_des_force[:,i] = col_env.handler.force_of(col_env.data,col_env.model,action)
 
-    fig, ax = plt.subplots(2, 2, figsize=(13, 8))
+    fig, ax = plt.subplots(2, 3, figsize=(13, 8))
     ax[0,0].plot(feet_touches[0,:],label="foot_1")
     ax[0,0].plot(feet_touches[1,:],label="foot_2")
     ax[0,0].plot(feet_touches[2,:],label="foot_3")
@@ -62,13 +65,22 @@ def data_collection(col_env,col_model):
     ax[1,0].set_title("velocity")
     ax[1,0].legend()
 
-    ax[1,1].plot(ac_des_force.T,label="diff desired vs usable ac_force")
+    ax[1,1].plot(ac_des_force.T)
     ax[1, 1].set_xlabel("steps")
     ax[1, 1].set_ylabel("force_diff")
     ax[1, 1].set_title("ac_force")
     ax[1, 1].legend()
 
-    plt.savefig("plots/analysis_v10.png")
+    ax[0, 2].plot(vel_vert[0, :],label="foot_1")
+    ax[0, 2].plot(vel_vert[1, :], label="foot_2")
+    ax[0, 2].plot(vel_vert[2, :], label="foot_3")
+    ax[0, 2].plot(vel_vert[3, :], label="foot_4")
+    ax[0, 2].set_xlabel("steps")
+    ax[0, 2].set_ylabel("velocity")
+    ax[0, 2].set_title("vertical foot velocity")
+    ax[0, 2].legend()
+
+    plt.savefig("plots/analysis_" + current_model  + ".png")
     plt.show()
 
 data_collection(eval_env,model)

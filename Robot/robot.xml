@@ -96,18 +96,18 @@
              ctrl="0 .6 -1.1  0 .6 -1.1  0 .6 -1.1  0 .6 -1.1"/>
     </keyframe>
     <actuator>
-        <position name="hip_1_servo"  joint="hip_1" kp="40" kv="1" forcerange="-1.57 1.57" ctrlrange="-0.69 0.69"/>
-        <position name="knee_1_servo"  joint="knee_1" kp="40" kv="1" forcerange="-1.57 1.57" ctrlrange="-1.5 1.5"/>
-        <position name="ankle_1_servo"  joint="ankle_1" kp="40" kv="1" forcerange="-1.57 1.57" ctrlrange="-0.845 0.845"/>
-        <position name="hip_2_servo"  joint="hip_2" kp="40" kv="1" forcerange="-1.57 1.57" ctrlrange="-0.69 0.69"/>
-        <position name="knee_2_servo"  joint="knee_2" kp="40" kv="1" forcerange="-1.57 1.57" ctrlrange="-1.5 1.5"/>
-        <position name="ankle_2_servo"  joint="ankle_2" kp="40" kv="1" forcerange="-1.57 1.57" ctrlrange="-0.845 0.845"/>
-        <position name="hip_3_servo"  joint="hip_3" kp="40" kv="1" forcerange="-1.57 1.57" ctrlrange="-0.69 0.69"/>
-        <position name="knee_3_servo"  joint="knee_3" kp="40" kv="1" forcerange="-1.57 1.57" ctrlrange="-1.5 1.5"/>
-        <position name="ankle_3_servo"  joint="ankle_3" kp="40" kv="1" forcerange="-1.57 1.57" ctrlrange="-0.845 0.845"/>
-        <position name="hip_4_servo"  joint="hip_4" kp="40" kv="1" forcerange="-1.57 1.57" ctrlrange="-0.69 0.69"/>
-        <position name="knee_4_servo"  joint="knee_4" kp="40" kv="1" forcerange="-1.57 1.57" ctrlrange="-1.5 1.5"/>
-        <position name="ankle_4_servo"  joint="ankle_4" kp="40" kv="1" forcerange="-1.57 1.57" ctrlrange="-0.845 0.845"/>
+        <position name="hip_1_servo"  joint="hip_1" kp="5" kv="0.3" forcerange="-1.57 1.57" ctrlrange="-1 1"/>
+        <position name="knee_1_servo"  joint="knee_1" kp="5" kv="0.3" forcerange="-1.57 1.57" ctrlrange="-1.57 1.57"/>
+        <position name="ankle_1_servo"  joint="ankle_1" kp="5" kv="0.3" forcerange="-1.57 1.57" ctrlrange="-1.2 1.2"/>
+        <position name="hip_2_servo"  joint="hip_2" kp="5" kv="0.3" forcerange="-1.57 1.57" ctrlrange="-1 1"/>
+        <position name="knee_2_servo"  joint="knee_2" kp="5" kv="0.3" forcerange="-1.57 1.57" ctrlrange="-1.57 1.57"/>
+        <position name="ankle_2_servo"  joint="ankle_2" kp="5" kv="0.3" forcerange="-1.57 1.57" ctrlrange="-1.2 1.2"/>
+        <position name="hip_3_servo"  joint="hip_3" kp="5" kv="0.3" forcerange="-1.57 1.57" ctrlrange="-1 1"/>
+        <position name="knee_3_servo"  joint="knee_3" kp="5" kv="0.3" forcerange="-1.57 1.57" ctrlrange="-1.57 1.57"/>
+        <position name="ankle_3_servo"  joint="ankle_3" kp="5" kv="0.3" forcerange="-1.57 1.57" ctrlrange="-1.2 1.2"/>
+        <position name="hip_4_servo"  joint="hip_4" kp="5" kv="0.3" forcerange="-1.57 1.57" ctrlrange="-1 1"/>
+        <position name="knee_4_servo"  joint="knee_4" kp="5" kv="0.3" forcerange="-1.57 1.57" ctrlrange="-1.57 1.57"/>
+        <position name="ankle_4_servo"  joint="ankle_4" kp="5" kv="0.3" forcerange="-1.57 1.57" ctrlrange="-1.2 1.2"/>
     </actuator>
     <sensor>
         <jointpos name="hip_1_pos" joint="hip_1"/>

@@ -43,7 +43,7 @@ if __name__ == "__main__":
     env = make_vec_env(RunClass, n_envs=8, seed=42,env_kwargs={"robot_path": "robot.xml"},vec_env_cls=SubprocVecEnv)
     model = PPO("MlpPolicy",env,verbose=1,device="cpu",**policy_kwargs)
     model.learn(total_timesteps=10000000,callback=checkpoint_callback)
-    model.save("walker_v10")
+    model.save("walker_v11")
     eval_env = RunClass(seed=41,robot_path ="robot.xml",ep_c=500,total_step=5_000_000)
     while True:
         with mujoco.viewer.launch_passive(eval_env.model, eval_env.data) as viewer:

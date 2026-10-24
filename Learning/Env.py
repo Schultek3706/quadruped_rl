@@ -18,7 +18,7 @@ class RunClass(gym.Env):
         frames_stacked = 30
         self.observation_space = gym.spaces.Box(low = -10*np.ones((44*frames_stacked,)),high = 10*np.ones((44*frames_stacked,)),shape = (44*frames_stacked,))
         self.obs = np.ones(44*frames_stacked)
-        self.action_space = gym.spaces.Box(low=-3*np.ones(12),high=3*np.ones(12),shape = (12,))
+        self.action_space = gym.spaces.Box(low=-2*np.ones(12),high=2*np.ones(12),shape = (12,))
         self.orientation = np.ones(50) #1 second
         self.orientation = self.orientation.astype(bool)
         self.touchdown = np.ones(3)
@@ -57,6 +57,7 @@ class RunClass(gym.Env):
 
         s = self.total_step / self.ramp_step
         s = np.clip(s, 0, 1)
+
         self.model, self.data = self.handler.reset_world_random(self.model,self.data,s)
         self.ep_c += 1
         self.yaw_base = self.rng.uniform(-0.3, 0.3)
@@ -92,6 +93,7 @@ class RunClass(gym.Env):
     def step(self, action): # 50hz control loop
         s = self.total_step/self.ramp_step
         s = np.clip(s,0,1)
+
         ac_clipped = np.clip(action,-1,1)
 
         servo_goal = self.handler.set_servos(ac_clipped)
@@ -160,16 +162,16 @@ class RunClass(gym.Env):
         err = self.limit_angle(yaw - self.yaw_base)
         self.avg_speed = (self.avg_speed*self.episode_step + vel_fwd)/(self.episode_step + 1)
 
-        temp_rews["base_rew"] = 0.1*np.exp(v_base)
+        temp_rews["base_rew"] = 0.1*np.exp(v_base)*(6 - 5*k)
         temp_rews["vel_reward"]= vel_rew = 5*np.exp(-(self.avg_speed - vel_fwd) ** 2 / SIGMA)*max(0,vel_fwd)
-        temp_rews["yaw_reward"] = np.exp(-err ** 2 / SIGMA)*vel_rew
+        temp_rews["yaw_reward"] = 2*k * np.exp(-err ** 2 / SIGMA) * vel_rew
 
         alive_reward = max(-0.1*grav[2],0)
         temp_rews["align_reward"] = 0.25*(1+np.cos(err))
 
-        head_touch = -head_touch*1
-        base_touch = -base_touch*1
-        knee_touch = -np.sum(knee_touch)*1
+        head_touch = -head_touch*3
+        base_touch = -base_touch*3
+        knee_touch = -np.sum(knee_touch)*3
         temp_rews["touch_pen"] = head_touch + base_touch + knee_touch
         temp_rews["pen_vel"] = -0.05*(vel_lat**2 + v_world[2]**2)
         temp_rews["pen_rot_vel"] = -0.002 * (2*rot_vel[0] ** 2 + 3*rot_vel[1] ** 2 + 4*rot_vel[2]**2)
@@ -177,20 +179,21 @@ class RunClass(gym.Env):
 
         ac_vel = action - self.last_action
         ac_acc = action - 2 * self.last_action + self.last_action2
-        temp_rews["pen_servo_pos"] = -0.001 * np.sum((base_pose - servo_pos) ** 2)
+        temp_rews["pen_servo_pos"] = -0.001 * np.sum((base_pose - servo_pos) ** 2)*k
         temp_rews["pen_servo_vel"] = -2e-4*np.sum(servo_vel ** 2)/(40*temp_rews["base_rew"])*k
-        temp_rews["pen_force"] = -0.004*np.sum((ac_force/0.65)**2)*k
+        temp_rews["pen_force"] = -0.01*np.sum((ac_force/0.65)**2)*k
         temp_rews["pen_ac"] = -0.1*np.sum((ac_vel) ** 2)*k
         temp_rews["pen_ac_acc"] = -0.01*np.sum((ac_acc) ** 2)*k
-        temp_rews["pen_action"] = -2*np.sum(np.maximum(np.abs(action) - 1.0, 0.0) ** 2)
-        temp_rews["pen_track"] = -0.02 * np.sum((servo_goal - servo_pos) ** 2)*k
-        temp_rews["pen_body_acc"] = -0.005 * (acc[0] ** 2 + acc[1] ** 2 + 0.5 * acc[2] ** 2) * k
-        temp_rews["pen_force_ac"] = -force_over/1500*k
+        temp_rews["pen_action"] = -2*np.sum(np.maximum(np.abs(action) - 1.0, 0.0))*k
+        temp_rews["pen_track"] = -0 * np.sum((servo_goal - servo_pos) ** 2)*k
+        temp_rews["pen_body_acc"] = -0.0075 * (acc[0] ** 2 + acc[1] ** 2 + 0.5 * acc[2] ** 2) * k
+        force_ac = np.abs(self.handler.force_demand(self.data,action)) - 0.65*self.handler.ac_max_force
+        temp_rews["pen_force_ac"] = -0.01*np.sum(np.where(force_ac > 0, force_ac**2,0))*k
 
         rel_feet_vel = np.where(np.array([feet_height])<0.0025,np.abs(feet_vel),0)
-        temp_rews["pen_sliding"] = -0.2*np.sum(rel_feet_vel)*k
+        temp_rews["pen_sliding"] = -0.25*np.sum(rel_feet_vel)*k
         feet_slam = np.where(max_speeds < 0, max_speeds, 0)**2
-        temp_rews["pen_slam"] = -0.3*np.sum(feet_slam)*k
+        temp_rews["pen_slam"] = -0.35*np.sum(feet_slam)*k
 
         rew_list = [temp_rews[terms] for terms in self.cols]
         total_reward = sum(rew_list) + alive_reward
@@ -231,7 +234,7 @@ class RunClass(gym.Env):
         ax[0,1].legend()
         ax[1,0].legend()
         ax[1,1].legend()
-        plt.savefig("log_" + str(self.seed) + ".png")
+        plt.savefig(fname="log_" + str(self.seed) + ".png")
         plt.close()
         pass
     @staticmethod

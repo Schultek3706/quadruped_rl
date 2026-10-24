@@ -1,4 +1,5 @@
 import mujoco
+import pandas as pd
 import torch
 import numpy as np
 from scipy.spatial.transform import Rotation as R
@@ -87,6 +88,7 @@ class DataHandler:
 
         self.kp = -model.actuator_biasprm[:,1].copy()
         self.kv = -model.actuator_biasprm[:,2].copy()
+        self.ac_max_force = model.actuator_forcerange[0,1].copy()
 
         self.nominal = {
             "body_mass": model.body_mass.copy(),
@@ -178,14 +180,19 @@ class DataHandler:
             max_speeds = np.minimum(max_speeds,vel_vert)
         return max_speeds
     def force_of(self,data,model,action):
+
+        d_ac_force = self.force_demand(data,action)
+        diff_force = np.abs(d_ac_force) - model.actuator_forcerange[:,1]
+        diff_force = np.where(diff_force>0,diff_force,0)
+        return diff_force
+
+    def force_demand(self,data, action):
         d_pos = self.set_servos(action)
         servo_pos = data.sensordata[self.sensor_pos_adr].copy()
         servo_vel = data.sensordata[self.sensor_vel_adr].copy()
 
-        d_ac_force = self.kp*(d_pos - servo_pos) - self.kv*servo_vel
-        diff_force = np.abs(d_ac_force) - model.actuator_forcerange[:,1]
-        diff_force = np.where(diff_force>0,diff_force,0)
-        return diff_force
+        d_ac_force = self.kp * (d_pos - servo_pos) - self.kv * servo_vel
+        return d_ac_force
     @staticmethod
     def projected_gravity(quat):
         conj = np.zeros(4)
