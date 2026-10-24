@@ -136,23 +136,23 @@ v10 - the analysis script shows that the robot demands higher torque most of the
 <br>
 v11 - the reward term has to be overworked to enforce the torque limits on the policies outputs<br>
 - Changes:<br>
--> Changed the kp and kv values for the actuators for better force control when handling noise
--> Changed the control range for a possible better gait while staying in a possible range
--> Base reward weight decays with the down to 1 for better initial learning and less "distraction" in later training
--> Yaw reward increase with ramp factor for better start
--> Increased the touch penalt weights to stop "self-harming" behaviour direclty when occuring
--> Scaled the action space back down to -2 to 2 for more tolerance while learning
--> Changed the force_ac penalty so that the used force isnt 100% of the maximum available force
--> Slight increase in the weight of slam and sliding penalty
-- occuring problems:
--> a faulty force penalty can result in a policy that cant really move as a high force usage penalizes higher than a stable speed gain
--> less stiff servos indireclty led to a policy learning to use the one knee instead of the foot
--> too high reward terms lead to a policy trying everything to gain a bit more speed instead of not overdemanding the servos
--> too high total penalty resulted in the reward drifting below 0 which resulted in the policy not effectively learning anymore
-- Results:
--> the policy learned fast how to run quite early
--> later progress slowed as initial high actions and higher servo force resulted in higher penalties
--> in the end it reached around 1.0 m/s and problems like torque and action penalty decreased
--> analysis show higher front foot swing but a slower vertical descent as well as less servo demand
--> gait has been analyzed for v10 under the new and old robot config for at least some comparability
+-> Changed the kp and kv values for the actuators for better force control when handling noise<br>
+-> Changed the control range for a possible better gait while staying in a possible range<br>
+-> Base reward weight decays with the down to 1 for better initial learning and less "distraction" in later training<br>
+-> Yaw reward increase with ramp factor for better start<br>
+-> Increased the touch penalt weights to stop "self-harming" behaviour direclty when occuring<br>
+-> Scaled the action space back down to -2 to 2 for more tolerance while learning<br>
+-> Changed the force_ac penalty so that the used force isnt 100% of the maximum available force<br>
+-> Slight increase in the weight of slam and sliding penalty<br>
+- occuring problems:<br>
+-> a faulty force penalty can result in a policy that cant really move as a high force usage penalizes higher than a stable speed gain<br>
+-> less stiff servos indireclty led to a policy learning to use the one knee instead of the foot<br>
+-> too high reward terms lead to a policy trying everything to gain a bit more speed instead of not overdemanding the servos<br>
+-> too high total penalty resulted in the reward drifting below 0 which resulted in the policy not effectively learning anymore<br>
+- Results:<br>
+-> the policy learned fast how to run quite early<br>
+-> later progress slowed as initial high actions and higher servo force resulted in higher penalties<br>
+-> in the end it reached around 1.0 m/s and problems like torque and action penalty decreased<br>
+-> analysis show higher front foot swing but a slower vertical descent as well as less servo demand<br>
+-> gait has been analyzed for v10 under the new and old robot config for at least some comparability<br>
 
