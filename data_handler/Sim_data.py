@@ -9,7 +9,7 @@ joints = ["hip_1","knee_1","ankle_1",
           "hip_4","knee_4","ankle_4",]
 noise_ratio = {"servo_pos": 0.005, "servo_vel": 0.05,"servo_pos_bias": 0.01,
                 "base_gyro": 0.05, "base_gyro_bias": 0.02, "sim_imu": 0.02,"zero_offset":0.01}
-world_noise = {"base_mass":0.15, "base_pos":0.015, "infill_mass": 0.1, "gearbox": 0.3, "armature": 0.3,"friction": 0.05,"strength":0.15}
+world_noise = {"base_mass":0.15, "base_pos":0.015, "infill_mass": 0.1, "gearbox": 0.3, "armature": 0.3,"friction": 0.05,"strength":0.1}
 class DataHandler:
     def __init__(self,model,seed=42):
         self.n_joints = len(joints)
@@ -100,6 +100,7 @@ class DataHandler:
             "floor_friction": model.geom_friction[self.floor_id, 0].copy(),
             "forcerange": model.actuator_forcerange.copy(),
         }
+        self.body_mass = self.nominal["body_mass"]
         self.noise_ratio = noise_ratio
         self.world_noise = world_noise
         self.rng = np.random.default_rng(seed=seed)
@@ -171,9 +172,10 @@ class DataHandler:
 
         height_foot = [height1, height2, height3, height4]
         return foot_touches,height_foot, vel_foot,vel_vert
-    def sub_step(self,model,data,n_steps):
+    def sub_step(self,model,data,n_steps,force_norm, torque):
         max_speeds = np.zeros((4,))
         for i in range(n_steps):
+            data.xfrc_applied[self.base_id] = np.concat((force_norm, torque))
             mujoco.mj_step(model,data,1)
             feet_vel = data.sensordata[self.feet_vel_adr].copy()
             vel_vert = feet_vel[:, 2]
@@ -232,6 +234,7 @@ class DataHandler:
         f[0] = 0.0
         f[self.base_id] = 1.0+s*self.rng.uniform(-self.world_noise["base_mass"],self.world_noise["base_mass"])
         model.body_mass[:] = self.nominal["body_mass"] * f
+        self.body_mass = model.body_mass[:].copy()
         model.body_inertia[:] = self.nominal["body_inertia"] * f[:, None]
 
         model.body_ipos[:] = self.nominal["body_ipos"]
@@ -242,7 +245,7 @@ class DataHandler:
         model.dof_armature[da] = self.nominal["dof_armature"][da] * (1 + s*self.rng.uniform(-self.world_noise["armature"],self.world_noise["armature"],size=self.n_joints))
         model.dof_frictionloss[da] = (self.nominal["dof_frictionloss"][da] + s*self.rng.uniform(0,self.world_noise["friction"],size=self.n_joints))
 
-        ac_weakness = 1.0 + s*self.rng.uniform(-self.world_noise["strength"],0,size=(self.num_ac,1))
+        ac_weakness = 1.0 + s*self.rng.uniform(-self.world_noise["strength"],self.world_noise["strength"],size=(self.num_ac,1))
         model.actuator_forcerange[:] = self.nominal["forcerange"]*ac_weakness
 
         model.geom_priority[self.floor_id] = 1

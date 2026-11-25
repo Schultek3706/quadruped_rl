@@ -7,28 +7,29 @@ import numpy as np
 from pathlib import Path
 from matplotlib import pyplot as plt
 
-current_model = "walker_v11"
+current_model = "walker_v12"
 here = Path(__file__).resolve().parent
 project_root = here.parent
 model_path = project_root / "Learning/models" / current_model
 
-model = PPO.load(model_path, device="cpu")
+ml = PPO.load(model_path, device="cpu")
 eval_env = RunClass(seed=41,robot_path ="robot.xml",ep_c=0,total_step=0)
 
-def data_collection(col_env,col_model):
+def data_collection(col_env,col_ml):
     obs,info = col_env.reset()
-    tp = 70 #testing-period for analysis
+    col_env.speed_command = 0.75
+    tp = 100 #testing-period for analysis
     feet_touches = np.zeros((4,tp))
     feet_height = np.zeros((4,tp))
     feet_vel = np.zeros((4,tp))
     vel_vert = np.zeros((4,tp))
     ac_des_force = np.zeros((12,tp))
     for i in range(50*10):
-        action = col_model.predict(obs,deterministic=True)[0]
+        action = col_ml.predict(obs,deterministic=True)[0]
         obs, reward, terminated, truncated, info = col_env.step(action)
 
     for i in range(tp):
-        action = col_model.predict(obs,deterministic=True)[0]
+        action = col_ml.predict(obs,deterministic=True)[0]
         obs, reward, terminated, truncated, info = col_env.step(action)
         feet_data = col_env.handler.feet_data(col_env.data,col_env.model)
         feet_touches[:,i] = feet_data[0]
@@ -65,7 +66,7 @@ def data_collection(col_env,col_model):
     ax[1,0].set_title("velocity")
     ax[1,0].legend()
 
-    ax[1,1].plot(ac_des_force.T)
+    ax[1,1].plot(ac_des_force.T,label=np.arange(len(ac_des_force)))
     ax[1, 1].set_xlabel("steps")
     ax[1, 1].set_ylabel("force_diff")
     ax[1, 1].set_title("ac_force")
@@ -83,4 +84,4 @@ def data_collection(col_env,col_model):
     plt.savefig("plots/analysis_" + current_model  + ".png")
     plt.show()
 
-data_collection(eval_env,model)
+data_collection(eval_env,ml)

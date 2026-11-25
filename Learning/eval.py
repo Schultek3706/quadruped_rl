@@ -4,7 +4,7 @@ import time
 import mujoco.viewer as view
 import mujoco
 
-model = PPO.load("models/walker_v11", device="cpu")
+ml = PPO.load("models/walker_v12", device="cpu")
 eval_env = RunClass(seed=41,robot_path ="robot.xml",ep_c=1000,total_step=10**6)
 
 base_id = mujoco.mj_name2id(eval_env.model, mujoco.mjtObj.mjOBJ_BODY, "base")
@@ -19,7 +19,7 @@ while True:
         viewer.cam.elevation = -30
         obs,info = eval_env.reset()
         while True:
-            action = model.predict(obs,deterministic=True)[0]
+            action = ml.predict(obs,deterministic=True)[0]
             obs, reward, terminated, truncated, info = eval_env.step(action)
             time.sleep(0.020)
             viewer.sync()

@@ -155,4 +155,28 @@ v11 - the reward term has to be overworked to enforce the torque limits on the p
 -> in the end it reached around 1.0 m/s and problems like torque and action penalty decreased<br>
 -> analysis show higher front foot swing but a slower vertical descent as well as less servo demand<br>
 -> gait has been analyzed for v10 under the new and old robot config for at least some comparability<br>
-
+<br>
+v12 - the speed reward has to be connected to some input to "control" the running speed while having a stable gate<br>
+- Changes:<br>
+-> Changed the speed reward to be 10 if speed is equal to the commanded speed otherwise it decreases linear with the error<br>
+    The reason gaussian didnt work in earlier versions was that the slope is almost 0 far away or on top of the distribution<br>
+-> Speed commanded is uniform random between 0 and 1 from the beginning<br>
+-> Changed the yaw reward to the structure of speed reward with a smaller possible reward than speed reward(may change later)<br>
+-> Increased the range of possible tracked yaw angle<br>
+-> Removed following penalty terms: pen_servo_vel, pen_servo_pos, pen_force, pen_ac and pen_acc as test runs showed that their contribution to the total penalty was near 0<br>
+-> Added plots to show the contribution of reward and penalty terms in percentage<br>
+-> Added pushes in the training that scale both in propability and strength with s<br>
+-> Added a second smaller phase in training with fixed action std to increase perfomancee in tracking speed under both with and without noise<br>
+    As the acceleration is depending on the mass the used formula uses the total mass, the time force is applied and resulting speed change<br>
+- occuring problems:<br>
+-> Speed and yaw reward can be negative and cancel each other resulting in the total reward being near 0 and both terms exploding in the pct contribution plots<br>
+-> Speed and yaw tracking not being accurate due to learned action uncertainty -> fixed being training a smaller amount of steps with a fixed action std<br>
+- Results:<br>
+-> The robot can now reliably track a commanded speed and yaw<br>
+-> The robot is now more robust against stronger pushes from all directions<br>
+-> !!!Note the push stress test is working with an older version of the env step and its handler substep method which didnt include the pushes!!!<br>
+-> The robot now turns to the correct yaw from a larger initial error. If the error is to large it turns until it knows how far it needs to turn (Problem due to yaw reward being negative at large errors)<br>
+-> possible falls when trying to turn fast<br>
+-> The body height decreased with this gaits version to increase stability<br>
+-> analysis shows lower foot swing, less slamming, possibly lower sliding, increased demanded force<br>
+-> the viewer also shows walking diagonally at certain commanded speed -> needs fixing<br>
